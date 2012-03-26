@@ -1,0 +1,27 @@
+
+.peGrid { 
+	border-collapse: collapse; font-family: DroidSansRegular, "Segoe UI", "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+	font-size: 12px; color:#333; 
+	border: 1px solid #eee;
+	}
+.peGrid thead td { padding: 5px 10px; border-bottom: 1px solid #ccc; 
+	background: #eee; /* Old browsers */
+	background: -moz-linear-gradient(top, #ffffff 0%, #f7f7f7 3%, #eeeeee 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#ffffff), color-stop(3%,#f7f7f7), color-stop(100%,#eeeeee)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #ffffff 0%,#f7f7f7 3%,#eeeeee 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top, #ffffff 0%,#f7f7f7 3%,#eeeeee 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top, #ffffff 0%,#f7f7f7 3%,#eeeeee 100%); /* IE10+ */
+	background: linear-gradient(top, #ffffff 0%,#f7f7f7 3%,#eeeeee 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#eeeeee',GradientType=0 ); /* IE6-9 */
+	}
+.peGrid tbody tr td { padding: 10px; background: #fff; border-top: 1px solid #eee; border-left: 1px solid #eee; }
+.peGrid tbody tr.even td { background: #fcfcfc; }
+
+#target input, select, textarea, button { outline: none; font-family: DroidSansRegular, "Lucida Sans Unicode", "Lucida Grande", sans-serif; font-size: 12px; }
+#target input, select, textarea, button { border: 1px solid #AAAAAA; padding: 5px; }
+#target input:focus,textarea:focus{
+	border: 1px solid #5897FB;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+}
+
+

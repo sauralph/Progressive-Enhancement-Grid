@@ -1,6 +1,14 @@
-jQuery.fn.peGrid = function(){
+jQuery.fn.peGrid = function(options){
+	
+	var defaults = {
+		selection:true,
+		allowAdd:true,
+		allowDelete:true
+	};
 	
 	var selecting;
+	
+	options = $.extend(defaults,options||{});
 	
 	var styleTable = function(context){
 		var table;
@@ -176,7 +184,7 @@ jQuery.fn.peGrid = function(){
 			current.find(":input[name^=data]").val(newValue);
 			
 			//now we can render...
-			current.trigger("render");
+			current.trigger("render.PeGrid");
 			
 			// if there is no render span...
 			//use the Cell's Text Node
@@ -194,6 +202,12 @@ jQuery.fn.peGrid = function(){
 			}
 	
 			current.data("history",history);
+			
+			//Clear-up validation Messages
+			
+			$(".error-message",current).hide("fast");
+			
+			current.removeClass("error");
 		}
 		
 	}
@@ -232,7 +246,7 @@ jQuery.fn.peGrid = function(){
 			$(this).trigger("focus.PeGrid");
 			// return false;
 		}).data("data-history",[])
-		.bind("render",render)
+		.bind("render.PeGrid",render)
 		.bind("focus.PeGrid",focusCell)
 		.bind("beginEdit.PeGrid",beginEdit)
 		.bind("endEdit.PeGrid",clearEdit)
@@ -240,6 +254,10 @@ jQuery.fn.peGrid = function(){
 		.bind("selectionChange.PeGrid",selectionChange)
 		.bind("addRow.PeGrid",addRow)
 		;
+		
+		if(!options.selection){
+			$("td",context).unbind("selectionChange.PeGrid");
+		}
 	}
 	
 	var focusCell = function(e){
@@ -308,38 +326,42 @@ jQuery.fn.peGrid = function(){
 	}
 	
 	var startContextTools = function(){
-		//if there is no cursor...
-		if ($("#delete-row-button").length==0) {
-			//Defining Cursor
+		if(options.allowDelete){
+			//if there is no cursor...
+			if ($("#delete-row-button").length==0) {
+				//Defining Cursor
 
-			$("<div tabindex='-1' id='delete-row-button'><strong><a href='javascript:void()'>Eliminar</a></strong></div>")
-			.css({
-				outline:"0",
-				border:"1px solid #CCC",
-				"box-shadow":"1px 1px 3px",
-				"background":"#EEE",
-				"position":"absolute",
-				"padding":"5px",
-				"-webkit-border-top-right-radius": "10px",
-				"-webkit-border-bottom-right-radius": "10px",
-				"-moz-border-radius-topright": "10px",
-				"-moz-border-radius-bottomright": "10px",
-				"border-top-right-radius": "10px",
-				"border-bottom-right-radius": "10px",
-				"-moz-box-shadow": "1px 1px 2px #ccc", 
-				"-webkit-box-shadow": "1px 1px 2px #ccc",
-				"box-shadow":"1px 1px 2px #ccc"
-				})
-			.appendTo("body")
-			.find("a")
-			.bind("click",function(e){
-				deleteRow();
-				return false;
-			});
+				$("<div tabindex='-1' id='delete-row-button'><strong><a href='javascript:void()'>Eliminar</a></strong></div>")
+				.css({
+					outline:"0",
+					border:"1px solid #CCC",
+					"box-shadow":"1px 1px 3px",
+					"background":"#EEE",
+					"position":"absolute",
+					"padding":"5px",
+					"-webkit-border-top-right-radius": "10px",
+					"-webkit-border-bottom-right-radius": "10px",
+					"-moz-border-radius-topright": "10px",
+					"-moz-border-radius-bottomright": "10px",
+					"border-top-right-radius": "10px",
+					"border-bottom-right-radius": "10px",
+					"-moz-box-shadow": "1px 1px 2px #ccc", 
+					"-webkit-box-shadow": "1px 1px 2px #ccc",
+					"box-shadow":"1px 1px 2px #ccc"
+					})
+				.appendTo("body")
+				.find("a")
+				.bind("click",function(e){
+					deleteRow();
+					return false;
+				});
+			}
 		}
+
 	}
 	
 	var selectionChange = function(){
+
 		var maxX,maxY,minX,minY;
 		
 		$(".selection").remove();
@@ -414,19 +436,22 @@ jQuery.fn.peGrid = function(){
 	}
 	
 	var addRow = function(){
-		var tabla = $(this).parents("table");
-		var nueva = $("tr:has(:input[name^=data])",tabla).last().clone();
-		renameInputs(nueva);
-		nueva
-			.toggleClass("even")
-			.toggleClass("odd")
-			.find(":input[name^=data]")
-				.filter(":input[name$='[id]']") //Limipiar ID
-					.val("")
+		if(options.allowAdd){
+			var tabla = $(this).parents("table");
+			var nueva = $("tr:has(:input[name^=data])",tabla).last().clone();
+			renameInputs(nueva);
+			nueva
+				.toggleClass("even")
+				.toggleClass("odd")
+				.find(":input[name^=data]")
+					.filter(":input[name$='[id]']") //Limipiar ID
+						.val("")
+					.end()
 				.end()
-			.end()
-			.insertAfter(tabla.find("tr:last"));
-		setEvents(nueva);
+				.insertAfter(tabla.find("tr:last"));
+			setEvents(nueva);
+		}
+
 	}
 	
 	var navigateCells = function(e){
@@ -459,13 +484,13 @@ jQuery.fn.peGrid = function(){
 		  {
 		      // left arrow
 		      case 37:
-		          next = currentTd.prev().trigger("focus.PeGrid");
+		          next = currentTd.prev(":visible").trigger("focus.PeGrid");
 		          break;
 
 			  case 9:
 		      // right arrow
 		      case 39:
-		          next = currentTd.next().trigger("focus.PeGrid");
+		          next = currentTd.next(":visible").trigger("focus.PeGrid");
 		          break;
 		      // up arrow
 		      case 38:
@@ -498,7 +523,7 @@ jQuery.fn.peGrid = function(){
 			break;
 
 			default:
-			if(e.keyCode >= 48 && e.keyCode <= 90 || e.keyCode == 32){
+			if((e.keyCode >= 48 && e.keyCode <= 90) || (e.keyCode == 32) || (e.keyCode >= 96 && e.keyCode <= 105) ){
 				currentTd.trigger("beginEdit.PeGrid");
 			}
 		  }
@@ -518,7 +543,7 @@ jQuery.fn.peGrid = function(){
 			var message = "Los cambios aun no fueron guardados";
 		  	
 			// alert($(that).is(":has(.dirty)"));
-			console.log($(that).is(":has(.dirty)"));
+			// console.log($(that).is(":has(.dirty)"));
 			if($(that).is(":has(.dirty)")||$("#target").is(".editing")){
 				e = e || window.event;
 			  // For IE and Firefox
@@ -560,4 +585,3 @@ jQuery.fn.peGrid = function(){
 
 	return this;
 }
-

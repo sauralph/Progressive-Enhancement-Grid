@@ -23,5 +23,43 @@
 	border: 1px solid #5897FB;
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
 }
+#delete-row-button{
+	font-family: DroidSansRegular, "Segoe UI", "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+}
 
+#delete-row-button span.last{
+	color:#fff;
+	text-shadow:1px 1px 1px #000;
+	float:right;
+}
+
+#delete-row-button a{
+/*	float:right;*/
+	color:#fff;
+	text-shadow:1px 1px 1px #000;
+	font-weight:bold;
+	text-decoration:none;
+}
+
+#delete-row-button a:hover{
+/*	float:right;*/
+	text-decoration:underline;
+}
+
+
+.peGrid tbody tr td.dirty,table tbody tr.even td.dirty,table tbody tr.odd td.dirty{
+	background-image:url(img/dirty.png);
+	background-repeat:no-repeat;
+	background-position:right top;
+}
+
+.peGrid tbody tr td.error,table tbody tr.even td.error,table tbody tr.odd td.error{
+	background-image:url(img/error.png);
+	background-repeat:no-repeat;
+	background-position:right center;
+}
+
+td.hidden{
+	display:none;
+}
 

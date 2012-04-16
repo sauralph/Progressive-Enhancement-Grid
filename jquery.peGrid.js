@@ -1,14 +1,93 @@
 jQuery.fn.peGrid = function(options){
 	
+	var blurTimer;
+	
 	var defaults = {
-		selection:true,
+		selection:false, //this is buggy...for now...
 		allowAdd:true,
-		allowDelete:true
+		allowDelete:true,
+		autoSubmit:true,
+		queryUpdateTemplate:":input[name='data[{model}][{iterator}][{field}]']",
+		deleteUrlTemplate:"controller/delete/{id}",
+		idQueryTemplate:":input[name$='[id]']",
+		lastRowText:"Ultima fila. Presione la tecla ⇣ para agregar una nueva fila",
+		deleteLinkText: "Elminar Fila",
+		extractFields:/data\[[^\]]+\]\[[^\]]+\]\[([^\]]+)\]/gi
 	};
 	
 	var selecting;
 	
 	options = $.extend(defaults,options||{});
+	
+	var invalidData = function(data){
+			queryTemplate = options.queryUpdateTemplate;
+			var current;
+			for(ord in data){
+				for(model in data[ord]){
+					for(field in data[ord][model]){
+						$(queryTemplate.replace("{model}",model).replace("{iterator}",ord).replace("{field}",field))
+						.parents("td")
+							.addClass("error")
+							.attr("title",data[ord][model][field].join("\n"));
+					}
+
+				}
+			}
+	}
+	
+	var updateInput = function(input,value){
+		if(input.length>0){
+
+			td = input.parents("td");
+			oldValue = input.val()
+			newValue = value;
+
+			if(newValue != oldValue || td.is(".dirty") ){
+				if(input.is(":checkbox")){
+					input.attr( "checked" , !!newValue );
+				}else if(input.is("select")){
+					input.val(input.find("option:contains('"+newValue+"')").first().attr("value"));
+				}else{
+					input.val(newValue)
+				}
+				
+
+
+				input.trigger("render.PeGrid");
+
+				td
+				.removeClass("dirty")
+				.removeClass("error")
+				.attr("title","");						
+				modified = true;
+			}
+		}
+	}
+	
+	var updateData = function(data){
+		queryTemplate = options.queryUpdateTemplate;
+		var tr = $("");
+		var input,oldValue,newValue,td,modified;
+		for(ord in data){
+			modified = false;
+			for(model in data[ord]){
+				for(field in data[ord][model]){
+					input = $(queryTemplate.replace("{model}",model).replace("{iterator}",ord).replace("{field}",field));
+					//if there is no input for this field...ignore it...
+					updateInput(input,data[ord][model][field]);
+
+
+
+				}
+			}
+			if(modified){
+				tr = tr.add(td.parents("tr"));
+			}
+
+		}
+		tr.trigger("updated");
+
+	}
 	
 	var styleTable = function(context){
 		var table;
@@ -21,10 +100,58 @@ jQuery.fn.peGrid = function(options){
 		table.addClass("peGrid");
 		
 	}
+	
+	//Set up the drag area
+	var startDropArea =  function(){
+		var table = $(this).parents("table");
+		$("<textarea id='dropTarget'></textarea>").css({
+			width:(table.outerWidth(false)-2),
+			height:(table.outerHeight(false)-2),
+			position:"absolute"
+		}).data("owner",table).appendTo("body").position({
+			of:table,
+			my:"top left",
+			at:"top left"
+		}).bind("drop",processDrop);
+	}
+	
+	//Process Data once it si dropped
+	var processDrop = function(){
+		setTimeout(function(){
+			var raw = $("#dropTarget").val();
+			var rows = raw.split("\n");
+			var data = [];
+			var table = $("#dropTarget").data("owner");
+			var fields = table.find("tbody tr").first().find("td").find(":input[name^=data]").map(function(){
+				return $(this).attr("name").replace(options.extractFields,"$1");
+				}).get();
+			var cells,datum,tds;
+			var trs = table.find("tbody tr");
+			if( trs.length < rows.length ){
+				for (var i=0; i < (rows.length - trs.length); i++) {
+					addRow.apply(trs,[null,true]);
+				};
+			}
+			//expand trs set to include the newly add rows
+			trs = table.find("tbody tr");
+			
+			for (var i=0; i < rows.length; i++) {
+				cells = rows[i].split("\t");
+				tds = trs.eq(i).find("td").filter(":has(:input[name^=data])");
+				
+				for (var j=0; j < cells.length; j++) {
+					updateInput(tds.eq(j).find(':input[name^=data]'),cells[j]);
+				};
+				
+			};
+			$("#dropTarget").remove();
+			// alert($(this).val());
+		},0);
+	}
+	
 
 	//Hide Inputs From Cells
-	//Add Editable Class to Cell
-	//
+	//Add Editable Class to Cell if the cell has a visible input item
 	var hideInputs = function(context){
 		$("td",context).filter(":has(:input[name^=data]:visible)").addClass("editable").not(":has(:checkbox)").each(function(){
 			var input = $(this).find(":input[name^=data]");
@@ -54,7 +181,7 @@ jQuery.fn.peGrid = function(options){
 	}
 	
 	//Clears Cursor and context tools
-	//Kills Editing components
+	//Removes Editing components
 	var clearEdit = function(){
 		if(typeof ($("#target").data("current")) === "undefined" ){
 			return;
@@ -64,6 +191,9 @@ jQuery.fn.peGrid = function(options){
 		
 	}
 	
+	//If the editor is opened
+	//Check the key before invoking
+	//default cell navigation
 	var checkBeforeNavigate = function(e){
 		
 		var currentTD = $($("#target").data("current"));
@@ -78,16 +208,15 @@ jQuery.fn.peGrid = function(options){
 					return false;
 		      	case 37:
 				case 39:
+				case 9:
 				// console.log(text.selectionStart);
 				// console.log(text.selectionEnd);
 				if(e.keyCode==37){
 					if(text && text.selectionStart && text.selectionEnd){
 						 if(text.selectionEnd!=text.selectionStart){
-							// console.log('con seleccion')
 							break;
 						}else if(text.selectionStart!=0){
 								//Do not Jump From Cell
-								// console.log('no inicio')
 								break;
 
 						}
@@ -154,6 +283,11 @@ jQuery.fn.peGrid = function(options){
 				"min-height":$("#target").height()
 			}).text(currentTD.text());
 		}
+		
+		editor.bind("blur",function(){
+			// currentTD.trigger("blurTable.PeGrid");
+		});
+		
 			$("#target").addClass("editing").append(editor);
 
 			editor.position({
@@ -230,7 +364,14 @@ jQuery.fn.peGrid = function(options){
 			}
 
 			if($(this).is(":has(span.render)")){
-				$(this).find("span.render").text(value);
+				var target = $(this).find("span.render");
+				if(target.text()!=value){
+					$(this).find("span.render").text(value);
+					if($.isFunction($.fn.effect)){
+						$(this).filter(":not(:animated)").effect("highlight","slow");
+					}
+				}
+
 			}// else{
 			// 		// $(this).text(value);
 			// 	}
@@ -253,11 +394,57 @@ jQuery.fn.peGrid = function(options){
 		.bind("commitEdit.PeGrid",commitEdit)
 		.bind("selectionChange.PeGrid",selectionChange)
 		.bind("addRow.PeGrid",addRow)
+		.bind("blurTable.PeGrid",blurTable)
+		.bind("localDelete.PeGrid",localDelete)
+		.bind("dragenter.PeGrid",startDropArea)
 		;
 		
 		if(!options.selection){
 			$("td",context).unbind("selectionChange.PeGrid");
 		}
+		
+		$("td",context).parents("table").click(function(){
+			// console.log("Click CONTENIDO...");
+			return false;
+		})
+		
+		$(document).bind("click",function(){
+			$($("#target").data("current")).trigger("blurTable.PeGrid");
+		})
+		
+	}
+	
+	var blurTable = function(e){
+		var caller = this;
+		setTimeout(function(){
+			$("#target").hide();
+			$("#delete-row-button").hide();
+			$($("#target").data('current')).trigger("commitEdit.PeGrid").trigger("endEdit.PeGrid");
+			//If I auto submit...
+			if(options.autoSubmit){
+				//check if Form plugin is loaded...
+				// if($.ajaxSubmit){
+					// console.log("in..");
+					var params = {
+						dataType:  'json', 
+						type: "POST",
+						"success":function(data){
+							if(data.success){
+								updateData(data.success);
+								invalidData(data.invalid);
+							}
+						},
+						"error":function(){
+							console.log("comm error");
+						}
+					};
+					// console.dir(caller);
+					$(caller).parents("form").ajaxSubmit(params);
+				// }
+			}
+			
+		},50);
+
 	}
 	
 	var focusCell = function(e){
@@ -282,13 +469,20 @@ jQuery.fn.peGrid = function(options){
 		
 
 		$("#delete-row-button").css({
-			height:($(this).outerHeight(false)-10)
+			width:($(this).parents("tr").outerWidth(false)-10)
 		}).show().position({
 			of:$(this).parents("tr"),
 			my:"left top",
-			at:"right top",
-			offset:"0 0"
+			at:"left bottom",
+			offset:"0 2"
 		});
+		
+		if(!$(this).parents("tr").next().length){
+			$("#delete-row-button>.last").show();
+		}else{
+			$("#delete-row-button>.last").hide();
+			
+		}
 
 		$("#target").show().css({
 			width:($(this).outerWidth(false)-2),
@@ -306,12 +500,19 @@ jQuery.fn.peGrid = function(options){
 		if ($("#target").length==0) {
 			//Defining Cursor
 
-			$("<div tabindex='-1' id='target'>&nbsp;</div>").css({outline:"0",border:"2px solid #3875D7","box-shadow":"1px 1px 3px","background":"transparent","position":"absolute"}).appendTo("body").bind("click",function(e){
+			$("<div tabindex='-1' id='target'>&nbsp;</div>").css({
+				outline:"0",
+				border:"2px solid #3875D7",
+				"box-shadow":"1px 1px 3px",
+				"background":"transparent",
+				"position":"absolute"
+				}).appendTo("body").bind("click",function(e){
 				if(!$(this).is(".editing")){
 					var currentTd = $("#target").data('current');
 					// currentTd.trigger("endEdit.PeGrid");
 					currentTd.trigger("beginEdit.PeGrid"); 
 				}
+				return false;
 
 			});
 
@@ -331,30 +532,36 @@ jQuery.fn.peGrid = function(options){
 			if ($("#delete-row-button").length==0) {
 				//Defining Cursor
 
-				$("<div tabindex='-1' id='delete-row-button'><strong><a href='javascript:void()'>Eliminar</a></strong></div>")
+				$("<div tabindex='-1' id='delete-row-button'><span class='last'>"+options.lastRowText+"</span><strong><a class='fr' href='javascript:void()'>"+options.deleteLinkText+"</a></strong></div>")
 				.css({
 					outline:"0",
 					border:"1px solid #CCC",
 					"box-shadow":"1px 1px 3px",
-					"background":"#EEE",
+					"background":"rgba(0,0,0,0.7)",
 					"position":"absolute",
 					"padding":"5px",
-					"-webkit-border-top-right-radius": "10px",
+					"-webkit-border-bottom-left-radius": "10px",
 					"-webkit-border-bottom-right-radius": "10px",
-					"-moz-border-radius-topright": "10px",
+					"-moz-border-radius-bottomleft": "10px",
 					"-moz-border-radius-bottomright": "10px",
-					"border-top-right-radius": "10px",
+					"border-bottom-left-radius": "10px",
 					"border-bottom-right-radius": "10px",
-					"-moz-box-shadow": "1px 1px 2px #ccc", 
-					"-webkit-box-shadow": "1px 1px 2px #ccc",
-					"box-shadow":"1px 1px 2px #ccc"
+					"-moz-box-shadow": "1px 1px 2px #000", 
+					"-webkit-box-shadow": "1px 1px 2px #000",
+					"box-shadow":"1px 1px 2px #000"
 					})
 				.appendTo("body")
 				.find("a")
 				.bind("click",function(e){
 					deleteRow();
 					return false;
-				});
+				})
+				.end()
+				.bind("click",function(e){
+					return false;
+				})
+				.hide()
+				;
 			}
 		}
 
@@ -435,7 +642,8 @@ jQuery.fn.peGrid = function(options){
 
 	}
 	
-	var addRow = function(){
+	var addRow = function(e,noFocus){
+		
 		if(options.allowAdd){
 			var tabla = $(this).parents("table");
 			var nueva = $("tr:has(:input[name^=data])",tabla).last().clone();
@@ -450,8 +658,37 @@ jQuery.fn.peGrid = function(options){
 				.end()
 				.insertAfter(tabla.find("tr:last"));
 			setEvents(nueva);
+			
+			// //focus new row
+			if(!noFocus){
+				$(this).parent().next().children("td").eq($(this).index()).trigger("focus.PeGrid");
+				
+			}
 		}
 
+	}
+	
+	var deleteRow = function(){
+		if(options.deleteUrlTemplate){
+			var row = $($("#target").data('current')).parents("tr");
+			$.post(options.deleteUrlTemplate.replace('{id}',$(options.idQueryTemplate,row).val()),function(data,text){
+				row.trigger("localDelete.PeGrid");
+			});
+		}else{
+			row.trigger("localDelete.PeGrid");
+		}
+		
+	}
+	
+	var localDelete = function (){
+		var row = $($("#target").data('current')).parents("tr");
+		//if there is more than one row, remove it
+		if(row.siblings("tr").length > 1){
+			row.remove();
+		}else{
+			//this is the last row...sanitize it....
+			row.find("td.editable").find(":input").val("").end().trigger("render.PeGrid");
+		}
 	}
 	
 	var navigateCells = function(e){
@@ -507,7 +744,12 @@ jQuery.fn.peGrid = function(options){
 				break;
 					//Esc Key
 			case 27:
-				currentTd.trigger("endEdit.PeGrid");
+				if($("#target").is("editing")){
+					currentTd.trigger("endEdit.PeGrid");
+				}else{
+					currentTd.trigger("blurTable.PeGrid");
+				}
+				
 				break;
 
 					//Esc Key
@@ -523,6 +765,7 @@ jQuery.fn.peGrid = function(options){
 			break;
 
 			default:
+			// console.log(e.keyCode);
 			if((e.keyCode >= 48 && e.keyCode <= 90) || (e.keyCode == 32) || (e.keyCode >= 96 && e.keyCode <= 105) ){
 				currentTd.trigger("beginEdit.PeGrid");
 			}
@@ -570,12 +813,13 @@ jQuery.fn.peGrid = function(options){
 	
 	//Link Events
 	setEvents(this);
-	
+
+	//Contextual Tools
+	startContextTools();
+		
 	//setUp Cursor
 	startCursor();
 	
-	//Contextual Tools
-	startContextTools();
 	
 	confirmExit(this);
 	
@@ -585,3 +829,4 @@ jQuery.fn.peGrid = function(options){
 
 	return this;
 }
+

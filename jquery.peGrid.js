@@ -492,7 +492,9 @@
 				my:"left top",
 				at:"left top",
 				offset:"0 0"
-			}).data('current',jQuery(this)).focus();
+			});
+			//sometimes position() breaks chain...
+			jQuery("#target").data('current',jQuery(this)).focus();
 		}
 
 		var startCursor = function(){

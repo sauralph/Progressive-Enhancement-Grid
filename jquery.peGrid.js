@@ -1,4 +1,3 @@
-function($){
 	jQuery.fn.peGrid = function(options){
 
 		var blurTimer;
@@ -18,7 +17,7 @@ function($){
 
 		var selecting;
 
-		options = $.extend(defaults,options||{});
+		options = jQuery.extend(defaults,options||{});
 
 		var invalidData = function(data){
 				queryTemplate = options.queryUpdateTemplate;
@@ -26,7 +25,7 @@ function($){
 				for(ord in data){
 					for(model in data[ord]){
 						for(field in data[ord][model]){
-							$(queryTemplate.replace("{model}",model).replace("{iterator}",ord).replace("{field}",field))
+							jQuery(queryTemplate.replace("{model}",model).replace("{iterator}",ord).replace("{field}",field))
 							.parents("td")
 								.addClass("error")
 								.attr("title",data[ord][model][field].join("\n"));
@@ -67,13 +66,13 @@ function($){
 
 		var updateData = function(data){
 			queryTemplate = options.queryUpdateTemplate;
-			var tr = $("");
+			var tr = jQuery("");
 			var input,oldValue,newValue,td,modified;
 			for(ord in data){
 				modified = false;
 				for(model in data[ord]){
 					for(field in data[ord][model]){
-						input = $(queryTemplate.replace("{model}",model).replace("{iterator}",ord).replace("{field}",field));
+						input = jQuery(queryTemplate.replace("{model}",model).replace("{iterator}",ord).replace("{field}",field));
 						//if there is no input for this field...ignore it...
 						updateInput(input,data[ord][model][field]);
 
@@ -95,7 +94,7 @@ function($){
 			if(context.is("table")){
 				table = context;
 			}else{
-				table = $("table",context);
+				table = jQuery("table",context);
 			}
 
 			table.addClass("peGrid");
@@ -104,8 +103,8 @@ function($){
 
 		//Set up the drag area
 		var startDropArea =  function(){
-			var table = $(this).parents("table");
-			$("<textarea id='dropTarget'></textarea>").css({
+			var table = jQuery(this).parents("table");
+			jQuery("<textarea id='dropTarget'></textarea>").css({
 				width:(table.outerWidth(false)-2),
 				height:(table.outerHeight(false)-2),
 				position:"absolute"
@@ -119,12 +118,12 @@ function($){
 		//Process Data once it si dropped
 		var processDrop = function(){
 			setTimeout(function(){
-				var raw = $("#dropTarget").val();
+				var raw = jQuery("#dropTarget").val();
 				var rows = raw.split("\n");
 				var data = [];
-				var table = $("#dropTarget").data("owner");
+				var table = jQuery("#dropTarget").data("owner");
 				var fields = table.find("tbody tr").first().find("td").find(":input[name^=data]").map(function(){
-					return $(this).attr("name").replace(options.extractFields,"$1");
+					return jQuery(this).attr("name").replace(options.extractFields,"$1");
 					}).get();
 				var cells,datum,tds;
 				var trs = table.find("tbody tr");
@@ -145,8 +144,8 @@ function($){
 					};
 
 				};
-				$("#dropTarget").remove();
-				// alert($(this).val());
+				jQuery("#dropTarget").remove();
+				// alert(jQuery(this).val());
 			},0);
 		}
 
@@ -154,8 +153,8 @@ function($){
 		//Hide Inputs From Cells
 		//Add Editable Class to Cell if the cell has a visible input item
 		var hideInputs = function(context){
-			$("td",context).filter(":has(:input[name^=data]:visible)").addClass("editable").not(":has(:checkbox)").each(function(){
-				var input = $(this).find(":input[name^=data]");
+			jQuery("td",context).filter(":has(:input[name^=data]:visible)").addClass("editable").not(":has(:checkbox)").each(function(){
+				var input = jQuery(this).find(":input[name^=data]");
 				var value;
 				if(input.is("select")){
 					value = input.find("option:selected").text();
@@ -163,7 +162,7 @@ function($){
 					value = input.val();
 				}
 				input.hide();
-				$("<span class='render'></span>").text(value).appendTo(this);
+				jQuery("<span class='render'></span>").text(value).appendTo(this);
 			}).end();
 
 		}
@@ -171,7 +170,7 @@ function($){
 		//Sets and Fixes the classes needed for 
 		//even/odd Striping
 		var reStripe = function(context){
-			$("tr",context)
+			jQuery("tr",context)
 			.removeClass("even odd")
 			.filter(":even")
 				.addClass("even")
@@ -184,11 +183,11 @@ function($){
 		//Clears Cursor and context tools
 		//Removes Editing components
 		var clearEdit = function(){
-			if(typeof ($("#target").data("current")) === "undefined" ){
+			if(typeof (jQuery("#target").data("current")) === "undefined" ){
 				return;
 			}
-			$($("#target").data("current"));
-			$("#target").removeClass("editing").find(":input").remove().end().focus();
+			jQuery(jQuery("#target").data("current"));
+			jQuery("#target").removeClass("editing").find(":input").remove().end().focus();
 
 		}
 
@@ -197,8 +196,8 @@ function($){
 		//default cell navigation
 		var checkBeforeNavigate = function(e){
 
-			var currentTD = $($("#target").data("current"));
-				var text = $("#target :text").get(0);
+			var currentTD = jQuery(jQuery("#target").data("current"));
+				var text = jQuery("#target :text").get(0);
 				switch(e.keyCode){
 					case 13:
 						currentTD.trigger("commitEdit.PeGrid");
@@ -243,8 +242,8 @@ function($){
 
 			        case 38:
 					case 40:
-						// console.dir($(this));
-						if($(this).attr("aria-haspopup") || $(this).is(".hasDatepicker") || $(this).is(".complex") || $(this).is("select")){
+						// console.dir(jQuery(this));
+						if(jQuery(this).attr("aria-haspopup") || jQuery(this).is(".hasDatepicker") || jQuery(this).is(".complex") || jQuery(this).is("select")){
 							//Ok...it is a complex component....leave it alone...
 							// console.log("complex component");
 							break;
@@ -258,7 +257,7 @@ function($){
 		}
 
 		var beginEdit = function(e){
-			var currentTD = $($("#target").data("current"));
+			var currentTD = jQuery(jQuery("#target").data("current"));
 			var editor;
 			if(currentTD.is(":not(.editable)") || currentTD.is(".editing")){
 				//avoid recursive calls and non-editable fields
@@ -266,22 +265,22 @@ function($){
 			}
 
 			if(currentTD.is(":has(:checkbox)")){
-				var $checkbox = currentTD.find(':checkbox');
-				$checkbox.attr('checked', !$checkbox.attr('checked'));
+				var jQuerycheckbox = currentTD.find(':checkbox');
+				jQuerycheckbox.attr('checked', !jQuerycheckbox.attr('checked'));
 				return false;
 			}
 
 			if(currentTD.find(":input").length>0){
 				editor = currentTD.find(":input").clone().css({
-					"min-width":$("#target").width(),
-					"min-height":$("#target").height()
+					"min-width":jQuery("#target").width(),
+					"min-height":jQuery("#target").height()
 				}).attr("id","editor"+(Math.random()*1000).toFixed(0)).show();
 				editor.val(currentTD.find(":input").val());
 				// if(editor.is("select"))
 			}else{
-				editor = $("<textarea name=\"editor\"></textarea>").css({
-					"min-width":$("#target").width(),
-					"min-height":$("#target").height()
+				editor = jQuery("<textarea name=\"editor\"></textarea>").css({
+					"min-width":jQuery("#target").width(),
+					"min-height":jQuery("#target").height()
 				}).text(currentTD.text());
 			}
 
@@ -289,7 +288,7 @@ function($){
 				// currentTD.trigger("blurTable.PeGrid");
 			});
 
-				$("#target").addClass("editing").append(editor);
+				jQuery("#target").addClass("editing").append(editor);
 
 				editor.position({
 						of:currentTD,
@@ -303,16 +302,16 @@ function($){
 		}
 
 		var commitEdit = function(){
-			// var current = $($("#target").data("current"));
-			var current = $(this);
+			// var current = jQuery(jQuery("#target").data("current"));
+			var current = jQuery(this);
 			var history = current.data("history")||[];
 			var oldValue ;
 			var newValue ;
 
-			if($("#target").is(".editing")){
-				$("#target").removeClass("editing");
+			if(jQuery("#target").is(".editing")){
+				jQuery("#target").removeClass("editing");
 
-				newValue = $("#target").find(":input").val();
+				newValue = jQuery("#target").find(":input").val();
 				oldValue = (current.find(":input[name^=data]").val());
 
 				//update hidden value...
@@ -340,7 +339,7 @@ function($){
 
 				//Clear-up validation Messages
 
-				$(".error-message",current).hide("fast");
+				jQuery(".error-message",current).hide("fast");
 
 				current.removeClass("error");
 			}
@@ -348,7 +347,7 @@ function($){
 		}
 
 		var render = function(){
-				var inputs = $(this).find(":input[name^=data]");
+				var inputs = jQuery(this).find(":input[name^=data]");
 				var value;
 
 				//test to se if there are many inputs...
@@ -364,28 +363,28 @@ function($){
 						value = inputs.filter(".renderMe").val();
 				}
 
-				if($(this).is(":has(span.render)")){
-					var target = $(this).find("span.render");
+				if(jQuery(this).is(":has(span.render)")){
+					var target = jQuery(this).find("span.render");
 					if(target.text()!=value){
-						$(this).find("span.render").text(value);
-						if($.isFunction($.fn.effect)){
-							$(this).filter(":not(:animated)").effect("highlight","slow");
+						jQuery(this).find("span.render").text(value);
+						if(jQuery.isFunction(jQuery.fn.effect)){
+							jQuery(this).filter(":not(:animated)").effect("highlight","slow");
 						}
 					}
 
 				}// else{
-				// 		// $(this).text(value);
+				// 		// jQuery(this).text(value);
 				// 	}
 		}
 
 		var setEvents = function(context){
 			//bind click event
-			$("td",context).click(function(e){
-				var last = $($("#target").data("current"));
-				$(last).trigger("commitEdit.PeGrid");
-				$(last).trigger("endEdit.PeGrid");
-				// $(last).trigger("blur.PeGrid");
-				$(this).trigger("focus.PeGrid");
+			jQuery("td",context).click(function(e){
+				var last = jQuery(jQuery("#target").data("current"));
+				jQuery(last).trigger("commitEdit.PeGrid");
+				jQuery(last).trigger("endEdit.PeGrid");
+				// jQuery(last).trigger("blur.PeGrid");
+				jQuery(this).trigger("focus.PeGrid");
 				// return false;
 			}).data("data-history",[])
 			.bind("render.PeGrid",render)
@@ -401,16 +400,16 @@ function($){
 			;
 
 			if(!options.selection){
-				$("td",context).unbind("selectionChange.PeGrid");
+				jQuery("td",context).unbind("selectionChange.PeGrid");
 			}
 
-			$("td",context).parents("table").click(function(){
+			jQuery("td",context).parents("table").click(function(){
 				// console.log("Click CONTENIDO...");
 				return false;
 			})
 
-			$(document).bind("click",function(){
-				$($("#target").data("current")).trigger("blurTable.PeGrid");
+			jQuery(document).bind("click",function(){
+				jQuery(jQuery("#target").data("current")).trigger("blurTable.PeGrid");
 			})
 
 		}
@@ -418,13 +417,13 @@ function($){
 		var blurTable = function(e){
 			var caller = this;
 			setTimeout(function(){
-				$("#target").hide();
-				$("#delete-row-button").hide();
-				$($("#target").data('current')).trigger("commitEdit.PeGrid").trigger("endEdit.PeGrid");
+				jQuery("#target").hide();
+				jQuery("#delete-row-button").hide();
+				jQuery(jQuery("#target").data('current')).trigger("commitEdit.PeGrid").trigger("endEdit.PeGrid");
 				//If I auto submit...
 				if(options.autoSubmit){
 					//check if Form plugin is loaded...
-					// if($.ajaxSubmit){
+					// if(jQuery.ajaxSubmit){
 						// console.log("in..");
 						var params = {
 							dataType:  'json', 
@@ -440,7 +439,7 @@ function($){
 							}
 						};
 						// console.dir(caller);
-						$(caller).parents("form").ajaxSubmit(params);
+						jQuery(caller).parents("form").ajaxSubmit(params);
 					// }
 				}
 
@@ -455,61 +454,61 @@ function($){
 			// console.log(selecting);
 
 			if(selecting){
-				$(this).addClass("selected");
+				jQuery(this).addClass("selected");
 			}else{
-				$(this).parents("table").find("td.selected").removeClass("selected");
+				jQuery(this).parents("table").find("td.selected").removeClass("selected");
 			}
 
-			$(this).trigger("selectionChange.PeGrid");
+			jQuery(this).trigger("selectionChange.PeGrid");
 
 
-			var last = $($("#target").data('current'));
+			var last = jQuery(jQuery("#target").data('current'));
 
 			last.trigger("blur.PeGrid");
 
 
 
-			$("#delete-row-button").css({
-				width:($(this).parents("tr").outerWidth(false)-10)
+			jQuery("#delete-row-button").css({
+				width:(jQuery(this).parents("tr").outerWidth(false)-10)
 			}).show().position({
-				of:$(this).parents("tr"),
+				of:jQuery(this).parents("tr"),
 				my:"left top",
 				at:"left bottom",
 				offset:"0 2"
 			});
 
-			if(!$(this).parents("tr").next().length){
-				$("#delete-row-button>.last").show();
+			if(!jQuery(this).parents("tr").next().length){
+				jQuery("#delete-row-button>.last").show();
 			}else{
-				$("#delete-row-button>.last").hide();
+				jQuery("#delete-row-button>.last").hide();
 
 			}
 
-			$("#target").show().css({
-				width:($(this).outerWidth(false)-2),
-				height:($(this).outerHeight(false)-2)
+			jQuery("#target").show().css({
+				width:(jQuery(this).outerWidth(false)-2),
+				height:(jQuery(this).outerHeight(false)-2)
 			}).position({
-				of:$(this),
+				of:jQuery(this),
 				my:"left top",
 				at:"left top",
 				offset:"0 0"
-			}).data('current',$(this)).focus();
+			}).data('current',jQuery(this)).focus();
 		}
 
 		var startCursor = function(){
 			//if there is no cursor...
-			if ($("#target").length==0) {
+			if (jQuery("#target").length==0) {
 				//Defining Cursor
 
-				$("<div tabindex='-1' id='target'>&nbsp;</div>").css({
+				jQuery("<div tabindex='-1' id='target'>&nbsp;</div>").css({
 					outline:"0",
 					border:"2px solid #3875D7",
 					"box-shadow":"1px 1px 3px",
 					"background":"transparent",
 					"position":"absolute"
 					}).appendTo("body").bind("click",function(e){
-					if(!$(this).is(".editing")){
-						var currentTd = $("#target").data('current');
+					if(!jQuery(this).is(".editing")){
+						var currentTd = jQuery("#target").data('current');
 						// currentTd.trigger("endEdit.PeGrid");
 						currentTd.trigger("beginEdit.PeGrid"); 
 					}
@@ -517,8 +516,8 @@ function($){
 
 				});
 
-				$("#target").hide().bind("keydown",function(e){
-					if($("#target").is(":visible") && !$("#target").is(".editing")){
+				jQuery("#target").hide().bind("keydown",function(e){
+					if(jQuery("#target").is(":visible") && !jQuery("#target").is(".editing")){
 						navigateCells(e);
 					}
 				}).bind("keyup",function(e){
@@ -530,10 +529,10 @@ function($){
 		var startContextTools = function(){
 			if(options.allowDelete){
 				//if there is no cursor...
-				if ($("#delete-row-button").length==0) {
+				if (jQuery("#delete-row-button").length==0) {
 					//Defining Cursor
 
-					$("<div tabindex='-1' id='delete-row-button'><span class='last'>"+options.lastRowText+"</span><strong><a class='fr' href='javascript:void()'>"+options.deleteLinkText+"</a></strong></div>")
+					jQuery("<div tabindex='-1' id='delete-row-button'><span class='last'>"+options.lastRowText+"</span><strong><a class='fr' href='javascript:void()'>"+options.deleteLinkText+"</a></strong></div>")
 					.css({
 						outline:"0",
 						border:"1px solid #CCC",
@@ -572,12 +571,12 @@ function($){
 
 			var maxX,maxY,minX,minY;
 
-			$(".selection").remove();
+			jQuery(".selection").remove();
 
-			$(".selected").each(function(){
-				var pos = $(this).position();
-				var offsetX = $(this).outerWidth();
-				var offsetY = $(this).outerHeight();
+			jQuery(".selected").each(function(){
+				var pos = jQuery(this).position();
+				var offsetX = jQuery(this).outerWidth();
+				var offsetY = jQuery(this).outerHeight();
 
 				if(typeof maxX === "undefined"){
 					maxX = pos.left + offsetX;
@@ -609,7 +608,7 @@ function($){
 
 			var css = {outline:"0",border:"1px solid #3875D7","background-color":"#3875D7","opacity":0.3,"position":"absolute"};
 
-			$("<div class='selection'>&nbsp;</div>").css(css).css(
+			jQuery("<div class='selection'>&nbsp;</div>").css(css).css(
 				{
 					width:maxX-minX+"px",
 					height:maxY-minY+"px",
@@ -624,7 +623,7 @@ function($){
 				var rName = /^(data\[\w*\]\[)(\d+)(\]\[\w*\])$/;
 				var rId = /^(\D+)(\d+)(\D+)$/;
 				$(":input[name^=data]",row).each(function(i,e){
-					var $this = $(this);
+					var $this = jQuery(this);
 					var name = $this.attr("name");
 					var id = $this.attr("id");
 					var mName = name.match(rName);
@@ -646,8 +645,8 @@ function($){
 		var addRow = function(e,noFocus){
 
 			if(options.allowAdd){
-				var tabla = $(this).parents("table");
-				var nueva = $("tr:has(:input[name^=data])",tabla).last().clone();
+				var tabla = jQuery(this).parents("table");
+				var nueva = jQuery("tr:has(:input[name^=data])",tabla).last().clone();
 				renameInputs(nueva);
 				nueva
 					.toggleClass("even")
@@ -662,7 +661,7 @@ function($){
 
 				// //focus new row
 				if(!noFocus){
-					$(this).parent().next().children("td").eq($(this).index()).trigger("focus.PeGrid");
+					jQuery(this).parent().next().children("td").eq(jQuery(this).index()).trigger("focus.PeGrid");
 
 				}
 			}
@@ -671,8 +670,8 @@ function($){
 
 		var deleteRow = function(){
 			if(options.deleteUrlTemplate){
-				var row = $($("#target").data('current')).parents("tr");
-				$.post(options.deleteUrlTemplate.replace('{id}',$(options.idQueryTemplate,row).val()),function(data,text){
+				var row = jQuery(jQuery("#target").data('current')).parents("tr");
+				jQuery.post(options.deleteUrlTemplate.replace('{id}',jQuery(options.idQueryTemplate,row).val()),function(data,text){
 					row.trigger("localDelete.PeGrid");
 				});
 			}else{
@@ -682,7 +681,7 @@ function($){
 		}
 
 		var localDelete = function (){
-			var row = $($("#target").data('current')).parents("tr");
+			var row = jQuery(jQuery("#target").data('current')).parents("tr");
 			//if there is more than one row, remove it
 			if(row.siblings("tr").length > 1){
 				row.remove();
@@ -693,7 +692,7 @@ function($){
 		}
 
 		var navigateCells = function(e){
-				var currentTd = $($("#target").data('current'));
+				var currentTd = jQuery(jQuery("#target").data('current'));
 				var tr;
 				var next;
 				next = currentTd.trigger("endEdit.PeGrid");
@@ -732,7 +731,7 @@ function($){
 			          break;
 			      // up arrow
 			      case 38:
-					next = currentTd.parent().prev().children("td").eq($(currentTd).index()).trigger("focus.PeGrid");
+					next = currentTd.parent().prev().children("td").eq(jQuery(currentTd).index()).trigger("focus.PeGrid");
 			      break;
 			      // down arrow
 			      case 40:
@@ -745,7 +744,7 @@ function($){
 					break;
 						//Esc Key
 				case 27:
-					if($("#target").is("editing")){
+					if(jQuery("#target").is("editing")){
 						currentTd.trigger("endEdit.PeGrid");
 					}else{
 						currentTd.trigger("blurTable.PeGrid");
@@ -781,14 +780,14 @@ function($){
 		} 
 
 		var confirmExit=function(context){
-			// $(window).bind()
+			// jQuery(window).bind()
 			var that = context;
 			window.onbeforeunload = function (e) {
 				var message = "Los cambios aun no fueron guardados";
 
-				// alert($(that).is(":has(.dirty)"));
-				// console.log($(that).is(":has(.dirty)"));
-				if($(that).is(":has(.dirty)")||$("#target").is(".editing")){
+				// alert(jQuery(that).is(":has(.dirty)"));
+				// console.log(jQuery(that).is(":has(.dirty)"));
+				if(jQuery(that).is(":has(.dirty)")||jQuery("#target").is(".editing")){
 					e = e || window.event;
 				  // For IE and Firefox
 				  if (e) {
@@ -824,10 +823,9 @@ function($){
 
 		confirmExit(this);
 
-		// $(document).click(function(){
-		// 	$("td")
+		// jQuery(document).click(function(){
+		// 	jQuery("td")
 		// });
 
 		return this;
 	}
-}(jQuery)

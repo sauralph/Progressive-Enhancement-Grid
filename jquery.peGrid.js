@@ -12,7 +12,7 @@
 			idQueryTemplate:":input[name$='[id]']",
 			lastRowText:"Ultima fila. Presione la tecla ⇣ para agregar una nueva fila",
 			deleteLinkText: "Elminar Fila",
-			extractFields:/data\[[^\]]+\]\[[^\]]+\]\[([^\]]+)\]/gi
+			extractFields:/data\[[^\]]+\]\[[^\]]+\]\[([^\]]+)\]/gi,
 		};
 
 		var selecting;
@@ -817,7 +817,7 @@
 		setEvents(this);
 
 		//Contextual Tools
-		startContextTools();
+		// startContextTools();
 
 		//setUp Cursor
 		startCursor();

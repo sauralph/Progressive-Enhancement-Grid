@@ -624,7 +624,7 @@
 		var renameInputs = function (row){
 				var rName = /^(data\[\w*\]\[)(\d+)(\]\[\w*\])$/;
 				var rId = /^(\D+)(\d+)(\D+)$/;
-				$(":input[name^=data]",row).each(function(i,e){
+				jQuery(":input[name^=data]",row).each(function(i,e){
 					var $this = jQuery(this);
 					var name = $this.attr("name");
 					var id = $this.attr("id");
@@ -725,8 +725,12 @@
 			      case 37:
 			          next = currentTd.prev(":visible").trigger("focus.PeGrid");
 			          break;
-
+				 //tab key
 				  case 9:
+				//nasty hack to avoid blur on tab....  
+				setTimeout(function(){
+					jQuery("#target").focus();
+					},1);
 			      // right arrow
 			      case 39:
 			          next = currentTd.next(":visible").trigger("focus.PeGrid");
@@ -777,7 +781,7 @@
 					next.addClass("selected");
 					currentTd.trigger("selectionChange.PeGrid");
 				}
-
+				
 			return false;
 		} 
 

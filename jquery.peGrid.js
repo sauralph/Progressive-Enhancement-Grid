@@ -13,6 +13,7 @@
 			lastRowText:"Ultima fila. Presione la tecla ⇣ para agregar una nueva fila",
 			deleteLinkText: "Elminar Fila",
 			extractFields:/data\[[^\]]+\]\[[^\]]+\]\[([^\]]+)\]/gi,
+			contextMenu:true
 		};
 
 		var selecting;
@@ -50,8 +51,6 @@
 					}else{
 						input.val(newValue)
 					}
-
-
 
 					input.trigger("render.PeGrid");
 
@@ -100,6 +99,8 @@
 			table.addClass("peGrid");
 
 		}
+		
+		var clearDrag;
 
 		//Set up the drag area
 		var startDropArea =  function(){
@@ -169,14 +170,16 @@
 		var hideInputs = function(context){
 			jQuery("td",context).filter(":has(:input[name^=data]:visible)").addClass("editable").not(":has(:checkbox)").each(function(){
 				var input = jQuery(this).find(":input[name^=data]");
-				var value;
-				if(input.is("select")){
-					value = input.find("option:selected").text();
-				}else{
-					value = input.val();
-				}
-				input.hide();
-				jQuery("<span class='render'></span>").text(value).appendTo(this);
+				input.hide().after(jQuery("<span class='render'></span>"));
+				render.apply(this);
+				// var value;
+				// if(input.is("select")){
+				// 	value = input.find("option:selected").text();
+				// }else{
+				// 	value = input.val();
+				// }
+				// input.hide();
+				// jQuery("<span class='render'></span>").text(value).appendTo(this);
 			}).end();
 
 		}
@@ -273,42 +276,52 @@
 		var beginEdit = function(e){
 			var currentTD = jQuery(jQuery("#target").data("current"));
 			var editor;
+			var length;
 			if(currentTD.is(":not(.editable)") || currentTD.is(".editing")){
 				//avoid recursive calls and non-editable fields
 				return false;
 			}
 
 			if(currentTD.is(":has(:checkbox)")){
+				//If there is a checkbox, just switch state
 				var jQuerycheckbox = currentTD.find(':checkbox');
 				jQuerycheckbox.attr('checked', !jQuerycheckbox.attr('checked'));
 				return false;
 			}
 
-			if(currentTD.find(":input").length>0){
-				editor = currentTD.find(":input").clone().css({
-					"min-width":jQuery("#target").width(),
-					"min-height":jQuery("#target").height()
-				}).attr("id","editor"+(Math.random()*1000).toFixed(0)).show();
-				editor.val(currentTD.find(":input").val());
-				// if(editor.is("select"))
+			var inputNumber = currentTD.find(":input").length;
+			if(inputNumber>0){
+				editor = jQuery("");
+				currentTD.find(":input").each(function(){
+					editor = editor.add(jQuery(this).clone().css({
+						"min-width":jQuery("#target").width()/inputNumber,
+						"min-height":jQuery("#target").height()
+					}).attr("id","editor"+(Math.random()*1000).toFixed(0)).show().val(jQuery(this).val()));
+					
+				});
+				console.dir(editor);
+
 			}else{
+				//Legacy Code
+				console.warn("Deprecated Code");
 				editor = jQuery("<textarea name=\"editor\"></textarea>").css({
 					"min-width":jQuery("#target").width(),
 					"min-height":jQuery("#target").height()
 				}).text(currentTD.text());
 			}
 
-			editor.bind("blur",function(){
-				// currentTD.trigger("blurTable.PeGrid");
-			});
 
 				jQuery("#target").addClass("editing").append(editor);
+				
+				if(inputNumber==1){
+					editor.position({
+							of:currentTD,
+							my:"left top",
+							at:"left top"
+						});
+				}
 
-				editor.position({
-						of:currentTD,
-						my:"left top",
-						at:"left top"
-					}).bind("keydown",checkBeforeNavigate).focus();
+				editor.bind("keydown",checkBeforeNavigate).focus();
 
 					if(editor.is("input,textarea,number")){
 						editor.get(0).select();
@@ -324,15 +337,38 @@
 
 			if(jQuery("#target").is(".editing")){
 				jQuery("#target").removeClass("editing");
+				
+				history.push(current.find("span.render").text());
+				
+				jQuery("#target").find(":input").each(function(){
+					newInput = jQuery(this);
+					hiddenInput = current.find(":input[name='"+newInput.attr("name")+"']");
+					newValue = newInput.val();
+					oldValue = hiddenInput.val();
+					
+					//update hidden value...
+					hiddenInput.val(newValue);
 
-				newValue = jQuery("#target").find(":input").val();
-				oldValue = (current.find(":input[name^=data]").val());
-
-				//update hidden value...
-				current.find(":input[name^=data]").val(newValue);
-
+				});
+				
 				//now we can render...
 				current.trigger("render.PeGrid");
+				
+				newValue = current.find("span.render").text();
+				
+				if(history.indexOf(newValue)==0){
+					current.removeClass("dirty");
+				}else{
+					current.addClass("dirty");
+				}
+
+				// newValue = jQuery("#target").find(":input").val();
+				// oldValue = (current.find(":input[name^=data]").val());
+				// 
+				// //update hidden value...
+				// current.find(":input[name^=data]").val(newValue);
+
+
 
 				// if there is no render span...
 				//use the Cell's Text Node
@@ -341,13 +377,7 @@
 				}
 
 
-				history.push(oldValue);
 
-				if(history.indexOf(newValue)==0){
-					current.removeClass("dirty");
-				}else{
-					current.addClass("dirty");
-				}
 
 				current.data("history",history);
 
@@ -363,33 +393,38 @@
 		var render = function(){
 				var inputs = jQuery(this).find(":input[name^=data]");
 				var value;
-
-				//test to se if there are many inputs...
-				switch(inputs.length){
-					case 0:
-						//no inputs?
-						value = "";
-						break;
-					case 1:
-						value = inputs.val();
-						break;
-					default:
-						value = inputs.filter(".renderMe").val();
+				var updated = false;
+				inputs.each(function(){
+					//do I hava a rendering.span?
+					if(jQuery(this).next().is("span.render")){
+						//Ok...so I will render...
+						var render = jQuery(this).next();
+						var input = jQuery(this);
+						if(input.is("select")){
+							value = input.find("option:selected").text();
+						}else{
+							value = input.val();
+						}
+						if(render.text()!=value){
+							render.text(value);
+							updated = true;
+						}
+						
+					}
+				});
+				if(updated){
+					if(jQuery.isFunction(jQuery.fn.effect)){
+						jQuery(this).filter(":not(:animated)").effect("highlight","slow");
+					}
 				}
 
-				if(jQuery(this).is(":has(span.render)")){
-					var target = jQuery(this).find("span.render");
-					if(target.text()!=value){
-						jQuery(this).find("span.render").text(value);
-						if(jQuery.isFunction(jQuery.fn.effect)){
-							jQuery(this).filter(":not(:animated)").effect("highlight","slow");
-						}
-					}
-
-				}// else{
-				// 		// jQuery(this).text(value);
-				// 	}
 		}
+		
+		var blurCell = function(){
+			// jQuery("#peGridContextMenu").hide();
+			
+		}
+
 
 		var setEvents = function(context){
 			//bind click event
@@ -411,6 +446,8 @@
 			.bind("blurTable.PeGrid",blurTable)
 			.bind("localDelete.PeGrid",localDelete)
 			.bind("dragenter.PeGrid",startDropArea)
+			.bind("contextmenu",contextMenu)
+			.bind("blur.PeGrid",blurCell)
 			;
 
 			if(!options.selection){
@@ -431,6 +468,7 @@
 		var blurTable = function(e){
 			var caller = this;
 			setTimeout(function(){
+				jQuery("#peGridContextMenu").hide();
 				jQuery("#target").hide();
 				jQuery("#delete-row-button").hide();
 				jQuery(jQuery("#target").data('current')).trigger("commitEdit.PeGrid").trigger("endEdit.PeGrid");
@@ -462,7 +500,10 @@
 		}
 
 		var focusCell = function(e){
-
+			jQuery("#peGridContextMenu").hide();
+			if(jQuery("#target").is("editing")){
+				currentTd.trigger("endEdit.PeGrid");
+			}
 			//inform blur to last cell
 
 			// console.log(selecting);
@@ -538,48 +579,85 @@
 					}
 				}).bind("keyup",function(e){
 					selecting = e.shiftKey;
-				});
+				}).bind("contextmenu",contextMenu)
+				;
 			}
 		}
 
-		var startContextTools = function(){
-			if(options.allowDelete){
-				//if there is no cursor...
-				if (jQuery("#delete-row-button").length==0) {
-					//Defining Cursor
 
-					jQuery("<div tabindex='-1' id='delete-row-button'><span class='last'>"+options.lastRowText+"</span><strong><a class='fr' href='javascript:void()'>"+options.deleteLinkText+"</a></strong></div>")
-					.css({
-						outline:"0",
-						border:"1px solid #CCC",
-						"box-shadow":"1px 1px 3px",
-						"background":"rgba(0,0,0,0.7)",
-						"position":"absolute",
-						"padding":"5px",
-						"-webkit-border-bottom-left-radius": "10px",
-						"-webkit-border-bottom-right-radius": "10px",
-						"-moz-border-radius-bottomleft": "10px",
-						"-moz-border-radius-bottomright": "10px",
-						"border-bottom-left-radius": "10px",
-						"border-bottom-right-radius": "10px",
-						"-moz-box-shadow": "1px 1px 2px #000", 
-						"-webkit-box-shadow": "1px 1px 2px #000",
-						"box-shadow":"1px 1px 2px #000"
-						})
-					.appendTo("body")
-					.find("a")
-					.bind("click",function(e){
-						deleteRow();
-						return false;
-					})
-					.end()
-					.bind("click",function(e){
-						return false;
-					})
-					.hide()
-					;
+		var contextMenu = function(){
+			// console.dir(this);
+
+			jQuery(this).trigger("focus.PeGrid");
+			
+			jQuery("#peGridContextMenu").css("position","absolute").menu().show().position({
+				my:"left top",
+				at:"left bottom",
+				of:this
+			});
+			jQuery(document).one("click",function(){
+				jQuery("#peGridContextMenu").hide();
+			})
+			return false;
+		}
+
+		var startContextTools = function(){
+			// if(options.contextMenu){
+				
+				var menu = jQuery("<ul></ul>");
+				menu.addClass("peGridContextMenu").attr("id","peGridContextMenu");
+				if(options.allowDelete){
+					li = jQuery("<li></li>");
+					li.append(jQuery("<a>Delete Row...</a>",{href:"#",click:function(){
+						// deleteRow.apply()
+					}}));
+					menu.append(li);
 				}
-			}
+				
+				li = jQuery("<li></li>");
+				li.append(jQuery("<a>Sum Column...</a>",{href:"#",click:function(){}}));
+				menu.append(li);
+				
+				menu.hide().appendTo("body");
+			// }
+			
+			// if(options.allowDelete){
+			// 	//if there is no cursor...
+			// 	if (jQuery("#delete-row-button").length==0) {
+			// 		//Defining Cursor
+			// 
+			// 		jQuery("<div tabindex='-1' id='delete-row-button'><span class='last'>"+options.lastRowText+"</span><strong><a class='fr' href='javascript:void()'>"+options.deleteLinkText+"</a></strong></div>")
+			// 		.css({
+			// 			outline:"0",
+			// 			border:"1px solid #CCC",
+			// 			"box-shadow":"1px 1px 3px",
+			// 			"background":"rgba(0,0,0,0.7)",
+			// 			"position":"absolute",
+			// 			"padding":"5px",
+			// 			"-webkit-border-bottom-left-radius": "10px",
+			// 			"-webkit-border-bottom-right-radius": "10px",
+			// 			"-moz-border-radius-bottomleft": "10px",
+			// 			"-moz-border-radius-bottomright": "10px",
+			// 			"border-bottom-left-radius": "10px",
+			// 			"border-bottom-right-radius": "10px",
+			// 			"-moz-box-shadow": "1px 1px 2px #000", 
+			// 			"-webkit-box-shadow": "1px 1px 2px #000",
+			// 			"box-shadow":"1px 1px 2px #000"
+			// 			})
+			// 		.appendTo("body")
+			// 		.find("a")
+			// 		.bind("click",function(e){
+			// 			deleteRow();
+			// 			return false;
+			// 		})
+			// 		.end()
+			// 		.bind("click",function(e){
+			// 			return false;
+			// 		})
+			// 		.hide()
+			// 		;
+			// 	}
+			// }
 
 		}
 
@@ -668,11 +746,14 @@
 					.toggleClass("even")
 					.toggleClass("odd")
 					.find(":input[name^=data]")
-						.filter(":input[name$='[id]']") //Limipiar ID
+						.filter(":input[name$='[id]']") //Clean ID
 							.val("")
 						.end()
 					.end()
-					.insertAfter(tabla.find("tr:last"));
+					.insertAfter(tabla.find("tr:last"))
+					.find("td")
+						.removeAttr("style") //removing custom styles (usful when duplicating a highlighting cell);
+						.removeClass("dirty")
 				setEvents(nueva);
 
 				// //focus new row
@@ -834,12 +915,11 @@
 		//Link Events
 		setEvents(this);
 
-		//Contextual Tools
-		// startContextTools();
-
 		//setUp Cursor
 		startCursor();
 
+		//Contextual Tools
+		startContextTools();
 
 		confirmExit(this);
 

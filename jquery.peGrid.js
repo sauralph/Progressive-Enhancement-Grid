@@ -104,6 +104,11 @@
 		//Set up the drag area
 		var startDropArea =  function(){
 			var table = jQuery(this).parents("table");
+			caption = jQuery("<h1 id='dropCaption'>Drop From Excel Here</h1>").appendTo("body").css({"width":"auto"}).position({
+				of:table,
+				my:"center center",
+				at:"center center"
+			});
 			jQuery("<textarea id='dropTarget'></textarea>").css({
 				width:(table.outerWidth(false)-2),
 				height:(table.outerHeight(false)-2),
@@ -112,7 +117,16 @@
 				of:table,
 				my:"top left",
 				at:"top left"
-			}).bind("drop",processDrop);
+			}).bind("drop",processDrop).css({"opacity":0.30,"background":"#000000"}).bind("dragleave.PeGrid",stopDragArea);
+		}
+		
+		var stopDragArea = function(){
+			// clearDrag = setTimeout(function(){
+				// console.log("dragout");
+			// })
+			
+			jQuery("#dropTarget,#dropCaption").remove();
+			
 		}
 
 		//Process Data once it si dropped
@@ -144,7 +158,7 @@
 					};
 
 				};
-				jQuery("#dropTarget").remove();
+				jQuery("#dropTarget,#dropCaption").remove();
 				// alert(jQuery(this).val());
 			},0);
 		}

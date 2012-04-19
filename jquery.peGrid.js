@@ -13,7 +13,9 @@
 			lastRowText:"Ultima fila. Presione la tecla ⇣ para agregar una nueva fila",
 			deleteLinkText: "Elminar Fila",
 			extractFields:/data\[[^\]]+\]\[[^\]]+\]\[([^\]]+)\]/gi,
-			contextMenu:true
+			contextMenu:true,
+			iteratorRegex:/^(data\[\w*\]\[)(\d+)(\]\[\w*\])$/,
+			idRegex:/^(\D+)(\d+)(\D+)$/
 		};
 
 		var selecting;
@@ -299,7 +301,7 @@
 					}).attr("id","editor"+(Math.random()*1000).toFixed(0)).show().val(jQuery(this).val()));
 					
 				});
-				console.dir(editor);
+				// console.dir(editor);
 
 			}else{
 				//Legacy Code
@@ -326,6 +328,8 @@
 					if(editor.is("input,textarea,number")){
 						editor.get(0).select();
 					}
+				
+				currentTD.trigger("editorReady");
 		}
 
 		var commitEdit = function(){
@@ -714,8 +718,10 @@
 		}
 
 		var renameInputs = function (row){
-				var rName = /^(data\[\w*\]\[)(\d+)(\]\[\w*\])$/;
-				var rId = /^(\D+)(\d+)(\D+)$/;
+				// var rName = /^(data\[\w*\]\[)(\d+)(\]\[\w*\])$/;
+				// 			var rId = /^(\D+)(\d+)(\D+)$/;
+				var rName = options.iteratorRegex;
+				var rId = options.idRegex;
 				jQuery(":input[name^=data]",row).each(function(i,e){
 					var $this = jQuery(this);
 					var name = $this.attr("name");

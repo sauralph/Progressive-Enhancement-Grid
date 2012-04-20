@@ -748,25 +748,38 @@
 				var tabla = jQuery(this).parents("table");
 				var nueva = jQuery("tr:has(:input[name^=data])",tabla).last().clone();
 				renameInputs(nueva);
+				// console.log(Date.now());
 				nueva
 					.toggleClass("even")
-					.toggleClass("odd")
+					.toggleClass("odd");
+				// console.log(Date.now());
+				nueva
 					.find(":input[name^=data]")
 						.filter(":input[name$='[id]']") //Clean ID
 							.val("")
 						.end()
-					.end()
-					.insertAfter(tabla.find("tr:last"))
+					.end();
+				var last = jQuery("tr",tabla).last();
+				
+				// var start = Date.now();
+				last.after(nueva);
+				// console.log(Date.now()-start + "ms");
+				
+				nueva
+					.insertAfter()
 					.find("td")
-						.removeAttr("style") //removing custom styles (usful when duplicating a highlighting cell);
+						.removeAttr("style") //removing custom styles (useful when duplicating a highlighting cell);
 						.removeClass("dirty")
 				setEvents(nueva);
+			
+				// console.log(Date.now());
 
 				// //focus new row
 				if(!noFocus){
 					jQuery(this).parent().next().children("td").eq(jQuery(this).index()).trigger("focus.PeGrid");
 
 				}
+				
 			}
 
 		}

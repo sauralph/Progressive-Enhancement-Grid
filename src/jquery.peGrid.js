@@ -58,7 +58,7 @@
 			var self = this;
 			//if there is no this.cursor...
 			if(!this.cursor){
-				this.cursor = $("<div tabindex='-1' id='target'>&nbsp;</div>");
+				this.cursor = $("<div tabindex='-1' class='cursor' id='cursor"+((new Date()) * 1)+"'>&nbsp;</div>");
 				this.cursor.css({
 					outline:"0",
 					border:"2px solid #3875D7",
@@ -144,12 +144,17 @@
 
 		//Clears input
 		stopEdit : function(){
-			this.cursor
+			self.editing = false;
+			self.cursor
 			.removeClass("editing")
 			.find(":input")
 				.remove()
-			.end()
-			.focus();
+			.end().focus();
+			// setTimeout(function(){
+			// 	console.dir(self.cursor);
+			// 	self.cursor.focus();
+			// },50);
+
 		},
 
 		//a TD cell receives focus...
@@ -194,7 +199,7 @@
 		},
 
 		navigateCells : function(e){
-			// console.dir(self);
+
 			switch(e.keyCode)
 			{
 				// left arrow
@@ -235,6 +240,7 @@
 				case 27:
 					if(self.editing){
 						self.stopEdit();
+						self.cursor.focus();
 					}else{
 						self.blurTable();
 					}
@@ -369,10 +375,10 @@
 		blurTable : function(){
 			var caller = this;
 			setTimeout(function(){
-				this.cursor.hide();
-				commit();
+				self.cursor.hide();
+				self.commit();
 				//If I auto submit...
-				if(options.autoSubmit){
+				if(self.options.autoSubmit){
 					//check if Form plugin is loaded...
 					// if(jQuery.ajaxSubmit){
 						// console.log("in..");
@@ -434,6 +440,7 @@
 					self.commit();
 				case 27:
 					self.stopEdit();
+					self.cursor.focus();
 					return false;
 		      	case 37:
 				case 39:

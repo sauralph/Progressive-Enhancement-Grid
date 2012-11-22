@@ -1,0 +1,97 @@
+
+.hipp-grid { 
+	border-collapse: collapse; font-family: DroidSansRegular, "Segoe UI", "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+	font-size: 12px; color:#333; 
+	border: 1px solid #eee;
+	}
+.hipp-grid thead td,.hipp-grid thead th { padding: 5px 10px; border-bottom: 1px solid #ccc; 
+	background: #eee; /* Old browsers */
+	background: -moz-linear-gradient(top, #ffffff 0%, #f7f7f7 3%, #eeeeee 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#ffffff), color-stop(3%,#f7f7f7), color-stop(100%,#eeeeee)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #ffffff 0%,#f7f7f7 3%,#eeeeee 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top, #ffffff 0%,#f7f7f7 3%,#eeeeee 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top, #ffffff 0%,#f7f7f7 3%,#eeeeee 100%); /* IE10+ */
+	background: linear-gradient(top, #ffffff 0%,#f7f7f7 3%,#eeeeee 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#eeeeee',GradientType=0 ); /* IE6-9 */
+	}
+.hipp-grid tbody tr td { padding: 10px; background: #fff; border-top: 1px solid #eee; border-left: 1px solid #eee; }
+.hipp-grid tbody tr.even td { background: #fcfcfc; }
+
+#target input, select, textarea, button { outline: none; font-family: DroidSansRegular, "Lucida Sans Unicode", "Lucida Grande", sans-serif; font-size: 12px; }
+#target input, select, textarea, button { border: 1px solid #AAAAAA; padding: 5px; }
+#target input:focus,textarea:focus{
+	border: 1px solid #5897FB;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+}
+#delete-row-button{
+	font-family: DroidSansRegular, "Segoe UI", "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+}
+
+#delete-row-button span.last{
+	color:#fff;
+	text-shadow:1px 1px 1px #000;
+	float:right;
+}
+
+#delete-row-button a{
+/*	float:right;*/
+	color:#fff;
+	text-shadow:1px 1px 1px #000;
+	font-weight:bold;
+	text-decoration:none;
+}
+
+#delete-row-button a:hover{
+/*	float:right;*/
+	text-decoration:underline;
+}
+
+
+.hipp-grid tbody tr td.dirty,table tbody tr.even td.dirty,table tbody tr.odd td.dirty{
+	background-image:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAAbEQAAGxEBBJxgLwAAAAd0SU1FB9wDDhEVJW8CgAMAAAB4SURBVBjTjZDRCYNAEETf7VYopALrSBWWctz92IGSlJBKxF0/cpGDU+PAwA68nY/hIzI4eLFV927gCSAR8gJmB1ABXwLYW7UbIXGutQ6aIRq4tY1T85pDiH4HBKib7Qr8wUtZAZjkDJxVHyMk/8bAH2mCCMzcVL8BNjpRV1osEHUAAAAASUVORK5CYII=');
+	background-repeat:no-repeat;
+	background-position:right top;
+}
+
+.hipp-grid tbody tr td.error,table tbody tr.even td.error,table tbody tr.odd td.error{
+	background-image:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB8AAAAfCAYAAAAfrhY5AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAADigAAA4oBp4z1HwAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAALpSURBVEiJxZdPattAGMV/GcsijhaOMYjYsV1CyLa7Qg6QJoVSyKoXaKHHCDlF20UP0F02hdbNPoEeoQSS2LKNwHG6kB1kWdOFLFWZWLLcpM2DAemT5j3NN3++pyUpJRnRAPaBHeAJUAHKQB/oAJfAMXA0vZ4PKeW8tiulPJGL4WTaL5U77eGWlLK5oKiKppRyM0ljSc5O+x7wGSiqD0ajEY7jMB6PmUwm5HI58vk8hmFQKBRmcQ2A19MpuYVZ4m+Aj0AuDPi+j23b9Pt9XNdNnEJd1ymXy5imiRAi/mgCvAM+pYnvAF/jwtfX17RaLTzPSxRVoWka9Xqd1dVV9QNeEMtAXHwT+AGUwkC326XX62UWVbG2tkalUomHBsAz4Awgnpv3cWHLsu4lDNDr9eh2u/FQaaoD/Bn5LvAt+rzBgPPz80TSlZUVarVadN9utxkOh4nvb2xsqFOwBzTDkR+GUd/3abfbaQNCCIFhGFFTFtcdtFotfN+Phw4hSHsD2A6jtm0vtLiywPM8bNuOh7aBhiA4MiP0+/0HFU7h3RcE2wsIDpC0fXwfuK7LaDSKh3bCtAPgOM4/EU7gbwigGt6Nx+NMJOqayLpGFP6qICiLAEwmk0wk6tRknSqFvywI6jEAuVzuTodZ8H0/Gq3neeo2SoTC3xdAdATl8/lMJADD4RDXdVMPFxUKf1cDLoCnAIZhZCY6OzvL/G4Ihf9CI6gyrwAKhQK6rs+dw+XlZarVaJ3S6XS4ublJ7aPrulrvjwWB54pQLpeZB03TKBaLUdM0bW6fGbxHgsDsnYYR0zQzkS0CTdMwTTMeOgUuw4pwEEaFEKyvr6eS+b6P4zhRm7fa6/W6WnwO4LaZaALPwxvLstRi8FeYYSi+E5TwW+JbBE4mMo33/QDTNNUs/iJwMj9VcQiK/BdiHu7q6grLshb2cLVajVKpFA9PgJfETMss9/oW+MAjuNcQ/8W3P+ofy6P+qyWlfRYe/C/1N9In7j+C6yR8AAAAAElFTkSuQmCC');
+	background-repeat:no-repeat;
+	background-position:right center;
+}
+
+td.hidden{
+	display:none;
+}
+
+.hipp-gridContextMenu{
+	list-style-type: none;
+	background-color:#ffffff;
+	border:1px solid #cbcbcb;
+	padding:0px;
+	box-shadow:1px 1px 3px rgba(0,0,0,0.5);
+	
+}
+
+.hipp-gridContextMenu li.ui-menu-item{
+	font-family: DroidSansRegular, "Segoe UI", "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+	font-weight:normal;
+	font-size:12px;
+	background-color:#ffffff;
+	padding:10px 50px 10px 20px;
+	cursor:pointer;
+	
+}
+
+.hipp-gridContextMenu li.ui-menu-item:hover{
+	background-color:#eeeeee;
+	
+}
+
+#dropCaption{
+	color:#000000;
+	text-align:"center";
+	border-radius:5px;
+/*	background:rgba(0,0,0,0.7);*/
+	font-family: DroidSansRegular, "Segoe UI", "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+	
+}

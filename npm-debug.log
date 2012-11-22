@@ -1,0 +1,160 @@
+0 info it worked if it ends with ok
+1 verbose cli [ 'node', '/usr/local/bin/npm', 'install', '-g', 'testacular' ]
+2 info using npm@1.1.62
+3 info using node@v0.8.10
+4 verbose read json /usr/local/lib/package.json
+5 verbose read json /usr/local/lib/package.json
+6 verbose cache add [ 'testacular', null ]
+7 silly cache add name=undefined spec="testacular" args=["testacular",null]
+8 verbose parsed url { pathname: 'testacular',
+8 verbose parsed url   path: 'testacular',
+8 verbose parsed url   href: 'testacular' }
+9 silly lockFile 88a8e36a-testacular testacular
+10 verbose lock testacular /Users/eze/.npm/88a8e36a-testacular.lock
+11 silly lockFile 88a8e36a-testacular testacular
+12 verbose addNamed [ 'testacular', '' ]
+13 verbose addNamed [ null, '' ]
+14 silly lockFile d1a2783a-testacular testacular@
+15 verbose lock testacular@ /Users/eze/.npm/d1a2783a-testacular.lock
+16 silly addNameRange { name: 'testacular', range: '', hasData: false }
+17 verbose url raw testacular
+18 verbose url resolving [ 'https://registry.npmjs.org/', './testacular' ]
+19 verbose url resolved https://registry.npmjs.org/testacular
+20 info trying registry request attempt 1 at 15:37:42
+21 verbose etag "7C1HKVYFLS8K67CCCE6U003SG"
+22 http GET https://registry.npmjs.org/testacular
+23 http 304 https://registry.npmjs.org/testacular
+24 silly registry.get cb [ 304,
+24 silly registry.get   { server: 'CouchDB/1.2.0 (Erlang OTP/R15B)',
+24 silly registry.get     etag: '"7C1HKVYFLS8K67CCCE6U003SG"',
+24 silly registry.get     date: 'Thu, 22 Nov 2012 18:37:11 GMT',
+24 silly registry.get     'content-length': '0' } ]
+25 verbose etag testacular from cache
+26 silly addNameRange number 2 { name: 'testacular', range: '', hasData: true }
+27 silly addNameRange versions [ 'testacular',
+27 silly addNameRange   [ '0.0.7',
+27 silly addNameRange     '0.0.8',
+27 silly addNameRange     '0.0.9',
+27 silly addNameRange     '0.0.10',
+27 silly addNameRange     '0.0.11',
+27 silly addNameRange     '0.0.12',
+27 silly addNameRange     '0.0.13',
+27 silly addNameRange     '0.0.14',
+27 silly addNameRange     '0.0.15',
+27 silly addNameRange     '0.0.16',
+27 silly addNameRange     '0.0.17',
+27 silly addNameRange     '0.1.0',
+27 silly addNameRange     '0.1.1',
+27 silly addNameRange     '0.1.2',
+27 silly addNameRange     '0.1.3',
+27 silly addNameRange     '0.2.0',
+27 silly addNameRange     '0.3.0',
+27 silly addNameRange     '0.3.1',
+27 silly addNameRange     '0.3.2',
+27 silly addNameRange     '0.3.3',
+27 silly addNameRange     '0.3.4',
+27 silly addNameRange     '0.3.5',
+27 silly addNameRange     '0.3.6',
+27 silly addNameRange     '0.3.7',
+27 silly addNameRange     '0.2.1',
+27 silly addNameRange     '0.3.8',
+27 silly addNameRange     '0.3.9',
+27 silly addNameRange     '0.3.10',
+27 silly addNameRange     '0.3.11',
+27 silly addNameRange     '0.3.12',
+27 silly addNameRange     '0.4.0',
+27 silly addNameRange     '0.5.0',
+27 silly addNameRange     '0.5.1',
+27 silly addNameRange     '0.5.2',
+27 silly addNameRange     '0.5.3',
+27 silly addNameRange     '0.5.4',
+27 silly addNameRange     '0.5.5' ] ]
+28 verbose addNamed [ 'testacular', '0.4.0' ]
+29 verbose addNamed [ '0.4.0', '0.4.0' ]
+30 silly lockFile 1b90ff0f-testacular-0-4-0 testacular@0.4.0
+31 verbose lock testacular@0.4.0 /Users/eze/.npm/1b90ff0f-testacular-0-4-0.lock
+32 verbose read json /Users/eze/.npm/testacular/0.4.0/package/package.json
+33 silly lockFile 1b90ff0f-testacular-0-4-0 testacular@0.4.0
+34 silly lockFile d1a2783a-testacular testacular@
+35 silly resolved [ { name: 'testacular',
+35 silly resolved     description: 'Spectacular Test Runner for JavaScript.',
+35 silly resolved     homepage: 'http://vojtajina.github.com/testacular/',
+35 silly resolved     bugs: { url: 'https://github.com/vojtajina/testacular/issues' },
+35 silly resolved     keywords:
+35 silly resolved      [ 'Testacular',
+35 silly resolved        'nodejs',
+35 silly resolved        'js',
+35 silly resolved        'javascript',
+35 silly resolved        'testing',
+35 silly resolved        'test',
+35 silly resolved        'remote',
+35 silly resolved        'execution' ],
+35 silly resolved     author: { name: 'Vojta Jína', email: 'vojta.jina@gmail.com' },
+35 silly resolved     contributors:
+35 silly resolved      [ [Object],
+35 silly resolved        [Object],
+35 silly resolved        [Object],
+35 silly resolved        [Object],
+35 silly resolved        [Object],
+35 silly resolved        [Object],
+35 silly resolved        [Object],
+35 silly resolved        [Object],
+35 silly resolved        [Object],
+35 silly resolved        [Object],
+35 silly resolved        [Object],
+35 silly resolved        [Object],
+35 silly resolved        [Object] ],
+35 silly resolved     dependencies:
+35 silly resolved      { 'socket.io': '>= 0.9.0',
+35 silly resolved        chokidar: '>=0.4.0',
+35 silly resolved        glob: '>=3.1.11',
+35 silly resolved        minimatch: '>=0.2.5',
+35 silly resolved        'http-proxy': '>=0.8.2',
+35 silly resolved        optimist: '>= 0.3.4',
+35 silly resolved        'coffee-script': '>= 1.3.3',
+35 silly resolved        xmlbuilder: '>= 0.4.2' },
+35 silly resolved     devDependencies:
+35 silly resolved      { 'jasmine-node': '>= 1.0.11',
+35 silly resolved        mocks: '>= 0.0.5',
+35 silly resolved        grunt: '>= 0.3.11' },
+35 silly resolved     preferGlobal: true,
+35 silly resolved     repository:
+35 silly resolved      { type: 'git',
+35 silly resolved        url: 'git://github.com/vojtajina/testacular.git' },
+35 silly resolved     main: './lib/index',
+35 silly resolved     bin: { testacular: './bin/testacular' },
+35 silly resolved     engines: { node: '>= 0.8.4' },
+35 silly resolved     version: '0.4.0',
+35 silly resolved     readme: '# Testacular [![Build Status](https://secure.travis-ci.org/vojtajina/testacular.png?branch=stable)](http://travis-ci.org/vojtajina/testacular) [![Build Status](https://secure.travis-ci.org/vojtajina/testacular.png?branch=master)](http://travis-ci.org/vojtajina/testacular)\n\nA simple tool that allows you to execute JavaScript code in multiple _real_ browsers, powered by [Node.js] and [Socket.io].\n\n[![Build Status](https://github.com/vojtajina/testacular/raw/master/screencast_858.png)](http://www.youtube.com/watch?v=MVw8N3hTfCI)\n\n**The main purpose of Testacular is to make your TDD development easy, fast, and fun.**\n\n\n## Installation\n\nFirst, you need to install [Node.js]. [There are installers](http://nodejs.org/download/) for both\nMacintosh and Windows. On Linux, we recommend using [NVM].\n\n````bash\nsudo npm install -g testacular\n\n# or install in a local folder (you have to create symlinks to binaries on your own)\nnpm install testacular\n````\n\nYou can install Testacular even without NPM, just get the latest package and create symlinks:\n\n````bash\n# replace x.y.z with latest version\ncurl http://registry.npmjs.org/testacular/-/testacular-x.y.z.tgz | tar -xv && mv package testacular\n\n# create symlinks (optional)\ncd testacular\nsudo ln -s $PWD/bin/testacular /usr/local/bin/testacular\n````\n\n## What is it good for?\n\nMostly for testing code in multiple browsers (desktop, mobile, tablets):\n\n- executing tests locally during development\n- executing tests on a continuous integration server\n\n\n## Let\'s do it!\n\nGo into your project and create a testacular configuration. Basically you need to specify the source files that you want to execute.\n\nFor an example configuration, see [test/client/testacular.conf.js](https://github.com/vojtajina/testacular/blob/master/test/client/testacular.conf.js) which contains most of the options.\n\n````bash\n# create config file (testacular.conf.js by default)\ntestacular init\n\n# start server\ntestacular start\n\n# open browsers you want to test (if testacular is not configured to do it for you)\nopen http://localhost:8080\n\n# if you want to run tests manually (without auto watching file changes), you can:\ntestacular run\n````\n\n## Testing frameworks support\n\nTestacular is not a testing framework, neither an assertion library, so for that you can use pretty much anything you like.\n\nHowever, we provide an adapter for [Jasmine] and [Mocha].\nIf you wanna write an adapter for your favourite testing framework, that\'s great - check out [adapter/jasmine.src.js](https://github.com/vojtajina/testacular/blob/master/adapter/jasmine.src.js) and write your own.\n\n## Browsers Supported\n\nPlease see the [wiki](https://github.com/vojtajina/testacular/wiki/Starting-browsers) for details on supported Browsers\nand how to configure non-default paths.\n\n## Why am I doing this?\n\nThroughout the development of [AngularJS], we\'ve been using [JSTD] for testing. I really think that JSTD is a great idea. Unfortunately, we had many problems with JSTD, so we decided to write our own test runner based on the same idea. We wanted a simple tool just for executing JavaScript tests that is both stable and fast. That\'s why we use the awesome [Socket.io] library and [Node.js].\n\n\n## Development\n\nIf you are thinking about making Testacular better, or you just want to hack on it, that\'s great - [fork the repo] and become [a contributor]!\n\n````bash\ngit clone git://github.com/vojtajina/testacular.git # or clone your fork\n\ncd testacular\nsudo npm install . --dev # install all dev dependencies (such as grunt, jasmine-node, etc...)\n````\n\n### Tips for contributing\n\n- create a branch per feature/fix\n- follow http://nodeguide.com/style.html (with exception of 100 characters per line)\n- send pull request requesting a merge to `master` branch (not to default `stable`)\n\n\nIf you have any further questions, join the [mailing list](https://groups.google.com/forum/#!forum/testacular) or [submit an issue](https://github.com/vojtajina/testacular/issues/new).\n\nYou can follow [@TestacularJS](http://twitter.com/TestacularJS) as well.\n\n\n## Versions\n\nTestacular uses [Semantic Versioning]. All even versions (eg. `0.2.x`, `0.4.x`) are considered to\nbe stable - no breaking changes, only bug fixes.\n\n### Stable channel (branch "stable")\n\n    npm install -g testacular\n\n### Canary channel (branch "master")\n\n    npm install -g testacular@canary\n\n<!--\n- anything on console will leak whole iframe window\n- it clears console before run (but works only in FF), Chrome/Safari does not allow, so do this:\nconsole.clear = clear;\n-->\n\n[AngularJS]: http://angularjs.org/\n[JSTD]: http://code.google.com/p/js-test-driver/\n[Socket.io]: http://socket.io/\n[Node.js]: http://nodejs.org/\n[NVM]: https://github.com/creationix/nvm\n[Grunt]: http://gruntjs.com/\n[Jasmine]: http://pivotal.github.com/jasmine/\n[Mocha]: http://visionmedia.github.com/mocha/\n[fork the repo]: https://github.com/vojtajina/testacular/fork_select\n[a contributor]: https://github.com/vojtajina/testacular/graphs/contributors\n[Semantic Versioning]: http://semver.org/\n',
+35 silly resolved     _id: 'testacular@0.4.0',
+35 silly resolved     _from: 'testacular' } ]
+36 info install testacular@0.4.0 into /usr/local/lib
+37 info installOne testacular@0.4.0
+38 verbose from cache /Users/eze/.npm/testacular/0.4.0/package/package.json
+39 info /usr/local/lib/node_modules/testacular unbuild
+40 verbose read json /usr/local/lib/node_modules/testacular/package.json
+41 info preuninstall testacular@0.4.0
+42 info uninstall testacular@0.4.0
+43 verbose true,/usr/local/lib/node_modules,/usr/local/lib/node_modules unbuild testacular@0.4.0
+44 verbose /usr/local/bin,[object Object] binRoot
+45 info /usr/local/lib/node_modules/testacular unbuild
+46 verbose read json /usr/local/lib/node_modules/testacular/package.json
+47 info preuninstall testacular@0.4.0
+48 info uninstall testacular@0.4.0
+49 verbose true,/usr/local/lib/node_modules,/usr/local/lib/node_modules unbuild testacular@0.4.0
+50 verbose /usr/local/bin,[object Object] binRoot
+51 error error rolling back Error: EPERM, chmod '/usr/local/bin/testacular'
+51 error error rolling back  testacular@0.4.0 { [Error: EPERM, chmod '/usr/local/bin/testacular'] errno: 50, code: 'EPERM', path: '/usr/local/bin/testacular' }
+52 error Error: EPERM, chmod '/usr/local/bin/testacular'
+52 error  { [Error: EPERM, chmod '/usr/local/bin/testacular'] errno: 50, code: 'EPERM', path: '/usr/local/bin/testacular' }
+53 error Please try running this command again as root/Administrator.
+54 error System Darwin 11.4.2
+55 error command "node" "/usr/local/bin/npm" "install" "-g" "testacular"
+56 error cwd /Users/eze/dev/Progressive-Enhancement-Grid
+57 error node -v v0.8.10
+58 error npm -v 1.1.62
+59 error path /usr/local/bin/testacular
+60 error code EPERM
+61 error errno 50
+62 error stack Error: EPERM, chmod '/usr/local/bin/testacular'
+63 verbose exit [ 50, true ]

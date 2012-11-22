@@ -253,7 +253,7 @@
 					break;
 				case 46:
 				//Delete key...
-					this.deleteRow();
+					self.deleteRow();
 				default:
 				// console.log(e.keyCode);
 				if((e.keyCode >= 48 && e.keyCode <= 90) || (e.keyCode == 32) || (e.keyCode >= 96 && e.keyCode <= 105) ){

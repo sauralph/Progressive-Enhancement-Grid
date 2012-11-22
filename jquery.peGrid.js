@@ -1,348 +1,116 @@
-	jQuery.fn.peGrid = function(options){
+//Ensuring $ namespace
+(function($){
+	//Factory grid
+	$.widget("hipp.grid",{
+		//reference to target object...
+		cursor  : false,
+		//reference to current cell...
+		current : false,
+		editing : false,
+		self    : false,
+		table   : false,
 
-		var blurTimer;
-
-		var defaults = {
+		//default options
+		options : {
 			selection:false, //this is buggy...for now...
 			allowAdd:true,
 			allowDelete:true,
 			autoSubmit:true,
+			contextMenu:true,
+			text:{
+				lastRow:"Ultima fila. Presione la tecla ⇣ para agregar una nueva fila",
+				deleteRow:"Elminar Fila"
+
+			},
+			//Function callbacks for these?
 			queryUpdateTemplate:":input[name='data[{model}][{iterator}][{field}]']",
 			deleteUrlTemplate:"controller/delete/{id}",
 			idQueryTemplate:":input[name$='[id]']",
-			lastRowText:"Ultima fila. Presione la tecla ⇣ para agregar una nueva fila",
-			deleteLinkText: "Elminar Fila",
-			extractFields:/data\[[^\]]+\]\[[^\]]+\]\[([^\]]+)\]/gi,
-			contextMenu:true
-		};
+			extractFields:/data\[[^\]]+\]\[[^\]]+\]\[([^\]]+)\]/gi		
+		},
 
-		var selecting;
-
-		options = jQuery.extend(defaults,options||{});
-
-		var invalidData = function(data){
-				queryTemplate = options.queryUpdateTemplate;
-				var current;
-				for(ord in data){
-					for(model in data[ord]){
-						for(field in data[ord][model]){
-							jQuery(queryTemplate.replace("{model}",model).replace("{iterator}",ord).replace("{field}",field))
-							.parents("td")
-								.addClass("error")
-								.attr("title",data[ord][model][field].join("\n"));
-						}
-
-					}
-				}
-		}
-
-		var updateInput = function(input,value){
-			if(input.length>0){
-
-				td = input.parents("td");
-				oldValue = input.val()
-				newValue = value;
-
-				if(newValue != oldValue || td.is(".dirty") ){
-					if(input.is(":checkbox")){
-						input.attr( "checked" , !!newValue );
-					}else if(input.is("select")){
-						input.val(input.find("option:contains('"+newValue+"')").first().attr("value"));
-					}else{
-						input.val(newValue)
-					}
-
-					input.trigger("render.PeGrid");
-
-					td
-					.removeClass("dirty")
-					.removeClass("error")
-					.attr("title","");						
-					modified = true;
-				}
-			}
-		}
-
-		var updateData = function(data){
-			queryTemplate = options.queryUpdateTemplate;
-			var tr = jQuery("");
-			var input,oldValue,newValue,td,modified;
-			for(ord in data){
-				modified = false;
-				for(model in data[ord]){
-					for(field in data[ord][model]){
-						input = jQuery(queryTemplate.replace("{model}",model).replace("{iterator}",ord).replace("{field}",field));
-						//if there is no input for this field...ignore it...
-						updateInput(input,data[ord][model][field]);
-
-
-
-					}
-				}
-				if(modified){
-					tr = tr.add(td.parents("tr"));
-				}
-
-			}
-			tr.trigger("updated");
-
-		}
-
-		var styleTable = function(context){
-			var table;
-			if(context.is("table")){
-				table = context;
+		_create: function(){
+			self = this;
+			//add styles to the table...
+			// var table;
+			if(this.element.is("table")){
+				this.table = this.element;
 			}else{
-				table = jQuery("table",context);
+				this.table = $("table",this.element);
 			}
+			// console.dir(self);
+			this.table.addClass("hipp-grid");
 
-			table.addClass("peGrid");
+			//hide input boxes and setup rendering framework...
+			$("td",this.table).filter(":has(:input[name^=data]:visible)").addClass("editable").not(":has(:checkbox)").each(function(){
+				var input = $(this).find(":input[name^=data]");
+				input.hide().after($("<span class='render'></span>"));
+				self.render(this);
+			}).end().data("data-history",[]);
 
-		}
-		
-		var clearDrag;
+			//wireup events...
+			this._wireEvents(this.table);
 
-		//Set up the drag area
-		var startDropArea =  function(){
-			var table = jQuery(this).parents("table");
-			caption = jQuery("<h1 id='dropCaption'>Drop From Excel Here</h1>").appendTo("body").css({"width":"auto"}).position({
-				of:table,
-				my:"center center",
-				at:"center center"
-			});
-			jQuery("<textarea id='dropTarget'></textarea>").css({
-				width:(table.outerWidth(false)-2),
-				height:(table.outerHeight(false)-2),
-				position:"absolute"
-			}).data("owner",table).appendTo("body").position({
-				of:table,
-				my:"top left",
-				at:"top left"
-			}).bind("drop",processDrop).css({"opacity":0.30,"background":"#000000"}).bind("dragleave.PeGrid",stopDragArea);
-		}
-		
-		var stopDragArea = function(){
-			// clearDrag = setTimeout(function(){
-				// console.log("dragout");
-			// })
-			
-			jQuery("#dropTarget,#dropCaption").remove();
-			
-		}
+			this._newCursor();
+		},
 
-		//Process Data once it si dropped
-		var processDrop = function(){
-			setTimeout(function(){
-				var raw = jQuery("#dropTarget").val();
-				var rows = raw.split("\n");
-				var data = [];
-				var table = jQuery("#dropTarget").data("owner");
-				var fields = table.find("tbody tr").first().find("td").find(":input[name^=data]").map(function(){
-					return jQuery(this).attr("name").replace(options.extractFields,"$1");
-					}).get();
-				var cells,datum,tds;
-				var trs = table.find("tbody tr");
-				if( trs.length < rows.length ){
-					for (var i=0; i < (rows.length - trs.length); i++) {
-						addRow.apply(trs,[null,true]);
-					};
-				}
-				//expand trs set to include the newly add rows
-				trs = table.find("tbody tr");
-
-				for (var i=0; i < rows.length; i++) {
-					cells = rows[i].split("\t");
-					tds = trs.eq(i).find("td").filter(":has(:input[name^=data])");
-
-					for (var j=0; j < cells.length; j++) {
-						updateInput(tds.eq(j).find(':input[name^=data]'),cells[j]);
-					};
-
-				};
-				jQuery("#dropTarget,#dropCaption").remove();
-				// alert(jQuery(this).val());
-			},0);
-		}
-
-
-		//Hide Inputs From Cells
-		//Add Editable Class to Cell if the cell has a visible input item
-		var hideInputs = function(context){
-			jQuery("td",context).filter(":has(:input[name^=data]:visible)").addClass("editable").not(":has(:checkbox)").each(function(){
-				var input = jQuery(this).find(":input[name^=data]");
-				input.hide().after(jQuery("<span class='render'></span>"));
-				render.apply(this);
-				// var value;
-				// if(input.is("select")){
-				// 	value = input.find("option:selected").text();
-				// }else{
-				// 	value = input.val();
-				// }
-				// input.hide();
-				// jQuery("<span class='render'></span>").text(value).appendTo(this);
-			}).end();
-
-		}
-
-		//Sets and Fixes the classes needed for 
-		//even/odd Striping
-		var reStripe = function(context){
-			jQuery("tr",context)
-			.removeClass("even odd")
-			.filter(":even")
-				.addClass("even")
-			.end()
-			.filter(":odd")
-				.addClass("odd");
-			return context;
-		}
-
-		//Clears Cursor and context tools
-		//Removes Editing components
-		var clearEdit = function(){
-			if(typeof (jQuery("#target").data("current")) === "undefined" ){
-				return;
-			}
-			jQuery(jQuery("#target").data("current"));
-			jQuery("#target").removeClass("editing").find(":input").remove().end().focus();
-
-		}
-
-		//If the editor is opened
-		//Check the key before invoking
-		//default cell navigation
-		var checkBeforeNavigate = function(e){
-
-			var currentTD = jQuery(jQuery("#target").data("current"));
-				var text = jQuery("#target :text").get(0);
-				switch(e.keyCode){
-					case 13:
-						currentTD.trigger("commitEdit.PeGrid");
-						// currentTD.trigger("endEdit.PeGrid");
-						currentTD.trigger("focus.PeGrid");
-					case 27:
-						currentTD.trigger("endEdit.PeGrid");
-						return false;
-			      	case 37:
-					case 39:
-					case 9:
-					// console.log(text.selectionStart);
-					// console.log(text.selectionEnd);
-					if(e.keyCode==37){
-						if(text && text.selectionStart && text.selectionEnd){
-							 if(text.selectionEnd!=text.selectionStart){
-								break;
-							}else if(text.selectionStart!=0){
-									//Do not Jump From Cell
-									break;
-
-							}
-						}
-					}else if(e.keyCode==39){
-						if(text && text.selectionStart && text.selectionEnd){
-							if(text.selectionEnd!=text.selectionStart){
-
-								break;
-							}else if(text.selectionEnd!=text.value.length){
-									//Do not Jump From Cell
-									// console.log('no fin')
-
-									break;
-
-							}
-						}
+		_newCursor : function(){
+			var self = this;
+			//if there is no this.cursor...
+			if(!this.cursor){
+				this.cursor = $("<div tabindex='-1' id='target'>&nbsp;</div>");
+				this.cursor.css({
+					outline:"0",
+					border:"2px solid #3875D7",
+					"box-shadow":"1px 1px 3px",
+					"background":"transparent",
+					"position":"absolute"
+					});
+				this.cursor.appendTo("body");
+				//commence edit
+				this.cursor.bind("click",function(e){
+					if(!self.editing){
+						self.startEdit();
 					}
-
-
-
-
-
-			        case 38:
-					case 40:
-						// console.dir(jQuery(this));
-						if(jQuery(this).attr("aria-haspopup") || jQuery(this).is(".hasDatepicker") || jQuery(this).is(".complex") || jQuery(this).is("select")){
-							//Ok...it is a complex component....leave it alone...
-							// console.log("complex component");
-							break;
-						}
-					currentTD.trigger("commitEdit.PeGrid");
-					navigateCells(e);
 					return false;
-					default:
-				}
-
-		}
-
-		var beginEdit = function(e){
-			var currentTD = jQuery(jQuery("#target").data("current"));
-			var editor;
-			var length;
-			if(currentTD.is(":not(.editable)") || currentTD.is(".editing")){
-				//avoid recursive calls and non-editable fields
-				return false;
-			}
-
-			if(currentTD.is(":has(:checkbox)")){
-				//If there is a checkbox, just switch state
-				var jQuerycheckbox = currentTD.find(':checkbox');
-				jQuerycheckbox.attr('checked', !jQuerycheckbox.attr('checked'));
-				return false;
-			}
-
-			var inputNumber = currentTD.find(":input").length;
-			if(inputNumber>0){
-				editor = jQuery("");
-				currentTD.find(":input").each(function(){
-					editor = editor.add(jQuery(this).clone().css({
-						"min-width":jQuery("#target").width()/inputNumber,
-						"min-height":jQuery("#target").height()
-					}).attr("id","editor"+(Math.random()*1000).toFixed(0)).show().val(jQuery(this).val()));
-					
 				});
-				console.dir(editor);
+				//keyboard navigation with the this.cursor
+				this.cursor.bind("keydown",function(e){
+					// console.log("navigate keyboard");
+					if(self.cursor.is(":visible") && !self.editing){
 
-			}else{
-				//Legacy Code
-				console.warn("Deprecated Code");
-				editor = jQuery("<textarea name=\"editor\"></textarea>").css({
-					"min-width":jQuery("#target").width(),
-					"min-height":jQuery("#target").height()
-				}).text(currentTD.text());
-			}
-
-
-				jQuery("#target").addClass("editing").append(editor);
-				
-				if(inputNumber==1){
-					editor.position({
-							of:currentTD,
-							my:"left top",
-							at:"left top"
-						});
-				}
-
-				editor.bind("keydown",checkBeforeNavigate).focus();
-
-					if(editor.is("input,textarea,number")){
-						editor.get(0).select();
+						self.navigateCells(e);
 					}
-		}
+				});
 
-		var commitEdit = function(){
-			// var current = jQuery(jQuery("#target").data("current"));
-			var current = jQuery(this);
-			var history = current.data("history")||[];
+			}
+			this.cursor.hide();
+
+		},
+
+		_wireEvents : function(table){
+			self = this;
+			//bind click event
+			$("td",table).bind('click',function(e){
+				//focus selected cell
+				self.focusCell(this);
+			});
+		},
+
+		//Saves current value to internal input
+		commit : function(){
+			// INSERT COMMIT CODE HERE
+			var history = this.current.data("history")||[];
 			var oldValue ;
 			var newValue ;
 
-			if(jQuery("#target").is(".editing")){
-				jQuery("#target").removeClass("editing");
-				
-				history.push(current.find("span.render").text());
-				
-				jQuery("#target").find(":input").each(function(){
-					newInput = jQuery(this);
-					hiddenInput = current.find(":input[name='"+newInput.attr("name")+"']");
+			if(this.editing){
+				this.editing = false;
+				history.push(this.current.find("span.render").text());
+								
+				this.cursor.find(":input").each(function(){
+					newInput = $(this);
+					hiddenInput = self.current.find(":input[name='"+newInput.attr("name")+"']");
 					newValue = newInput.val();
 					oldValue = hiddenInput.val();
 					
@@ -352,126 +120,257 @@
 				});
 				
 				//now we can render...
-				current.trigger("render.PeGrid");
+				this.render(this.current);
 				
-				newValue = current.find("span.render").text();
+				newValue = this.current.find("span.render").text();
 				
+				//I am dirty?
 				if(history.indexOf(newValue)==0){
-					current.removeClass("dirty");
+					this.current.removeClass("dirty");
 				}else{
-					current.addClass("dirty");
+					this.current.addClass("dirty");
 				}
 
-				// newValue = jQuery("#target").find(":input").val();
-				// oldValue = (current.find(":input[name^=data]").val());
-				// 
-				// //update hidden value...
-				// current.find(":input[name^=data]").val(newValue);
-
-
-
-				// if there is no render span...
-				//use the Cell's Text Node
-				if(!current.is(":has(span.render)")){
-					oldValue = (current.text());
-				}
-
-
-
-
-				current.data("history",history);
+				this.current.data("history",history);
 
 				//Clear-up validation Messages
 
-				jQuery(".error-message",current).hide("fast");
+				$(".error-message",this.current).hide("fast");
 
-				current.removeClass("error");
+				this.current.removeClass("error");
+				this.stopEdit();
+			}
+		},
+
+		//Clears input
+		stopEdit : function(){
+			this.cursor
+			.removeClass("editing")
+			.find(":input")
+				.remove()
+			.end()
+			.focus();
+		},
+
+		//a TD cell receives focus...
+		focusCell : function(cell){
+			if(!cell || cell.length == 0){
+				return false;
 			}
 
-		}
+			//close last cell, if any
+			if(self.last){
+				self.commit();
+			}
 
-		var render = function(){
-				var inputs = jQuery(this).find(":input[name^=data]");
-				var value;
-				var updated = false;
-				inputs.each(function(){
-					//do I hava a rendering.span?
-					if(jQuery(this).next().is("span.render")){
-						//Ok...so I will render...
-						var render = jQuery(this).next();
-						var input = jQuery(this);
-						if(input.is("select")){
-							value = input.find("option:selected").text();
-						}else{
-							value = input.val();
-						}
-						if(render.text()!=value){
-							render.text(value);
-							updated = true;
-						}
-						
+			//if there is a current cell, now is last cell..
+			if(self.current){
+				self.last = self.current;
+				self._trigger("cellblur",0,self.last);	
+			}
+
+			//this cell is current...
+			self.current = $(cell);
+
+			self.moveCursorTo(self.current);
+			self.cursor.focus();
+		},
+
+		//move and resize this.cursor to target cell
+		moveCursorTo : function(cell){
+			cell = $(cell);
+			if(cell.length==0){
+				return false;
+			}
+			this.cursor.show().css({
+				width:($(cell).outerWidth(false)-2),
+				height:($(cell).outerHeight(false)-2)
+			}).position({
+				of:$(cell),
+				my:"left top",
+				at:"left top",
+				offset:"0 0"
+			});
+		},
+
+		navigateCells : function(e){
+			// console.dir(self);
+			switch(e.keyCode)
+			{
+				// left arrow
+			    case 37:
+			    	this.focusCell(this.current.prev(":visible"));
+			        break;
+				 //tab key
+				case 9:
+				//nasty hack to avoid blur on tab....  
+					setTimeout(function(){
+						self.cursor.focus();
+					},1);
+			    // right arrow
+			    case 39:
+			    	self.focusCell(this.current.next(":visible"));
+			    	break;
+			      // up arrow
+			    case 38:
+			      	//if alt key
+			      	if(e.altKey){
+			      		// console.log("insert...");
+			      		newRow = this.addRow();
+			      		this.current.parent().before(newRow);
+			      	}else{
+						this.focusCell(this.current.parent().prev().children("td").eq(this.current.index()));
+			      	}
+			      break;
+			      // down arrow
+			    case 40:
+					var tr = self.current.parent().next();
+					if(tr.length){
+						self.focusCell(this.current.parent().next().children("td").eq(this.current.index()));
+					}else{
+						self.addRow();
 					}
+					break;
+						//Esc Key
+				case 27:
+					if(self.editing){
+						self.stopEdit();
+					}else{
+						self.blurTable();
+					}
+
+					break;
+
+						//Enter Key
+				case 13:
+					e.preventDefault();
+					this.startEdit();
+				break;
+						//Backspace Key
+				case 8:
+					e.stopPropagation();
+					this.startEdit();
+					break;
+				case 46:
+				//Delete key...
+					this.deleteRow();
+				default:
+				// console.log(e.keyCode);
+				if((e.keyCode >= 48 && e.keyCode <= 90) || (e.keyCode == 32) || (e.keyCode >= 96 && e.keyCode <= 105) ){
+					this.startEdit();
+				}
+			  }
+				
+			return false;
+		},
+
+		//Comence Edit on current cell
+		startEdit : function(){
+			var editor;
+			var length;
+			var self = this;
+			if(this.current.is(":not(.editable)") || this.editing){
+				//avoid recursive calls and non-editable fields
+				return false;
+			}
+
+			if(this.current.is(":has(:checkbox)")){
+				//If there is a checkbox, just switch state
+				var $checkbox = this.current.find(':checkbox');
+				$checkbox.attr('checked', !$checkbox.attr('checked'));
+				return false;
+			}
+
+			var inputNumber = this.current.find(":input").length;
+			//if there is more than one input
+			if(inputNumber>0){
+				editor = $("");
+				this.current.find(":input").each(function(){
+					editor = editor.add($(this).clone().css({
+						"min-width":self.cursor.width()/inputNumber,
+						"min-height":self.cursor.height()
+					}).attr("id","editor"+(Math.random()*1000).toFixed(0)).show().val(jQuery(this).val()));
+					
 				});
-				if(updated){
-					if(jQuery.isFunction(jQuery.fn.effect)){
-						jQuery(this).filter(":not(:animated)").effect("highlight","slow");
+			}else{
+				//Legacy Code
+				console.warn("Deprecated Code");
+				editor = jQuery("<textarea name=\"editor\"></textarea>").css({
+					"min-width":jQuery("#target").width(),
+					"min-height":jQuery("#target").height()
+				}).text(this.current.text());
+			}
+
+			this.editing = true;
+			this.cursor.addClass("editing").append(editor);
+			
+			if(inputNumber==1){
+				editor.position({
+						of:this.current,
+						my:"left top",
+						at:"left top"
+					});
+			}
+
+			editor.bind("keydown",this.checkBeforeNavigate).focus();
+		},
+
+		//Add new row
+
+		addRow : function (){
+			if(self.options.allowAdd){				
+				var newRow = $("tr:has(:input[name^=data])",self.table).last().clone();
+				self.renameInputs(newRow);
+				newRow
+					.toggleClass("even")
+					.toggleClass("odd")
+					.find(":input[name^=data]")
+						// .filter(":input[name$='[id]']") //Clean ID
+							.val("")
+						// .end()
+					.end()
+					.insertAfter(self.table.find("tr:last"))
+					.find("td")
+						.removeAttr("style") //removing custom styles (usful when duplicating a highlighting cell);
+						.removeClass("dirty")
+						.each(function(i,cell){
+							self.render(cell);
+						})
+				self._wireEvents(newRow);
+
+
+				// focus the new row
+				//INSERT CODE HERE
+
+			}
+		},
+
+		renameInputs : function(row){
+			var rName = /^(data\[\w*\]\[)(\d+)(\]\[\w*\])$/;
+			var rId = /^(\D+)(\d+)(\D+)$/;
+			$(":input[name^=data]",row).each(function(i,e){
+				var $this = $(this);
+				var name = $this.attr("name");
+				var id = $this.attr("id");
+				var mName = name.match(rName);
+				var mId = id.match(rId);
+				var numero = 0;
+				if(mName && mId && mName[2] == mId[2]){
+					numero = parseInt(mName[2]);
+					if(isFinite(numero)){
+						numero++;
+						$this.attr("name",name.replace(rName,"$1"+numero+"$3"));
+						$this.attr("id",id.replace(rId,"$1"+numero+"$3"));
 					}
 				}
+			});
+		},
 
-		}
-		
-		var blurCell = function(){
-			// jQuery("#peGridContextMenu").hide();
-			
-		}
-
-
-		var setEvents = function(context){
-			//bind click event
-			jQuery("td",context).click(function(e){
-				var last = jQuery(jQuery("#target").data("current"));
-				jQuery(last).trigger("commitEdit.PeGrid");
-				jQuery(last).trigger("endEdit.PeGrid");
-				// jQuery(last).trigger("blur.PeGrid");
-				jQuery(this).trigger("focus.PeGrid");
-				// return false;
-			}).data("data-history",[])
-			.bind("render.PeGrid",render)
-			.bind("focus.PeGrid",focusCell)
-			.bind("beginEdit.PeGrid",beginEdit)
-			.bind("endEdit.PeGrid",clearEdit)
-			.bind("commitEdit.PeGrid",commitEdit)
-			.bind("selectionChange.PeGrid",selectionChange)
-			.bind("addRow.PeGrid",addRow)
-			.bind("blurTable.PeGrid",blurTable)
-			.bind("localDelete.PeGrid",localDelete)
-			.bind("dragenter.PeGrid",startDropArea)
-			.bind("contextmenu",contextMenu)
-			.bind("blur.PeGrid",blurCell)
-			;
-
-			if(!options.selection){
-				jQuery("td",context).unbind("selectionChange.PeGrid");
-			}
-
-			jQuery("td",context).parents("table").click(function(){
-				// console.log("Click CONTENIDO...");
-				return false;
-			})
-
-			jQuery(document).bind("click",function(){
-				jQuery(jQuery("#target").data("current")).trigger("blurTable.PeGrid");
-			})
-
-		}
-
-		var blurTable = function(e){
+		blurTable : function(){
 			var caller = this;
 			setTimeout(function(){
-				jQuery("#peGridContextMenu").hide();
-				jQuery("#target").hide();
-				jQuery("#delete-row-button").hide();
-				jQuery(jQuery("#target").data('current')).trigger("commitEdit.PeGrid").trigger("endEdit.PeGrid");
+				this.cursor.hide();
+				commit();
 				//If I auto submit...
 				if(options.autoSubmit){
 					//check if Form plugin is loaded...
@@ -487,7 +386,7 @@
 								}
 							},
 							"error":function(){
-								console.log("comm error");
+								// console.log("comm error");
 							}
 						};
 						// console.dir(caller);
@@ -496,436 +395,82 @@
 				}
 
 			},50);
+		},
 
-		}
-
-		var focusCell = function(e){
-			jQuery("#peGridContextMenu").hide();
-			if(jQuery("#target").is("editing")){
-				currentTd.trigger("endEdit.PeGrid");
-			}
-			//inform blur to last cell
-
-			// console.log(selecting);
-
-			if(selecting){
-				jQuery(this).addClass("selected");
-			}else{
-				jQuery(this).parents("table").find("td.selected").removeClass("selected");
-			}
-
-			jQuery(this).trigger("selectionChange.PeGrid");
-
-
-			var last = jQuery(jQuery("#target").data('current'));
-
-			last.trigger("blur.PeGrid");
-
-
-
-			jQuery("#delete-row-button").css({
-				width:(jQuery(this).parents("tr").outerWidth(false)-10)
-			}).show().position({
-				of:jQuery(this).parents("tr"),
-				my:"left top",
-				at:"left bottom",
-				offset:"0 2"
-			});
-
-			if(!jQuery(this).parents("tr").next().length){
-				jQuery("#delete-row-button>.last").show();
-			}else{
-				jQuery("#delete-row-button>.last").hide();
-
-			}
-
-			jQuery("#target").show().css({
-				width:(jQuery(this).outerWidth(false)-2),
-				height:(jQuery(this).outerHeight(false)-2)
-			}).position({
-				of:jQuery(this),
-				my:"left top",
-				at:"left top",
-				offset:"0 0"
-			});
-			//sometimes position() breaks chain...
-			jQuery("#target").data('current',jQuery(this)).focus();
-		}
-
-		var startCursor = function(){
-			//if there is no cursor...
-			if (jQuery("#target").length==0) {
-				//Defining Cursor
-
-				jQuery("<div tabindex='-1' id='target'>&nbsp;</div>").css({
-					outline:"0",
-					border:"2px solid #3875D7",
-					"box-shadow":"1px 1px 3px",
-					"background":"transparent",
-					"position":"absolute"
-					}).appendTo("body").bind("click",function(e){
-					if(!jQuery(this).is(".editing")){
-						var currentTd = jQuery("#target").data('current');
-						// currentTd.trigger("endEdit.PeGrid");
-						currentTd.trigger("beginEdit.PeGrid"); 
+		render :  function(cell){
+			var inputs = $(cell).find(":input[name^=data]");
+			var value;
+			var updated = false;
+			inputs.each(function(){
+				//do I hava a rendering.span?
+				if($(this).next().is("span.render")){
+					//Ok...so I will render...
+					var render = $(this).next();
+					var input = $(this);
+					if(input.is("select")){
+						value = input.find("option:selected").text();
+					}else{
+						value = input.val();
 					}
+					if(render.text()!=value){
+						render.text(value);
+						updated = true;
+					}
+					
+				}
+			});
+			if(updated){
+				if($.isFunction($.fn.effect)){
+					$(this).filter(":not(:animated)").effect("highlight","slow");
+				}
+			}
+
+		},
+
+		checkBeforeNavigate : function(e){
+			var text = jQuery("#target :text").get(0);
+			switch(e.keyCode){
+				case 13:
+					self.commit();
+				case 27:
+					self.stopEdit();
 					return false;
-
-				});
-
-				jQuery("#target").hide().bind("keydown",function(e){
-					if(jQuery("#target").is(":visible") && !jQuery("#target").is(".editing")){
-						navigateCells(e);
-					}
-				}).bind("keyup",function(e){
-					selecting = e.shiftKey;
-				}).bind("contextmenu",contextMenu)
-				;
-			}
-		}
-
-
-		var contextMenu = function(){
-			// console.dir(this);
-
-			jQuery(this).trigger("focus.PeGrid");
-			
-			jQuery("#peGridContextMenu").css("position","absolute").menu().show().position({
-				my:"left top",
-				at:"left bottom",
-				of:this
-			});
-			jQuery(document).one("click",function(){
-				jQuery("#peGridContextMenu").hide();
-			})
-			return false;
-		}
-
-		var startContextTools = function(){
-			// if(options.contextMenu){
-				
-				var menu = jQuery("<ul></ul>");
-				menu.addClass("peGridContextMenu").attr("id","peGridContextMenu");
-				if(options.allowDelete){
-					li = jQuery("<li></li>");
-					li.append(jQuery("<a>Delete Row...</a>",{href:"#",click:function(){
-						// deleteRow.apply()
-					}}));
-					menu.append(li);
-				}
-				
-				li = jQuery("<li></li>");
-				li.append(jQuery("<a>Sum Column...</a>",{href:"#",click:function(){}}));
-				menu.append(li);
-				
-				menu.hide().appendTo("body");
-			// }
-			
-			// if(options.allowDelete){
-			// 	//if there is no cursor...
-			// 	if (jQuery("#delete-row-button").length==0) {
-			// 		//Defining Cursor
-			// 
-			// 		jQuery("<div tabindex='-1' id='delete-row-button'><span class='last'>"+options.lastRowText+"</span><strong><a class='fr' href='javascript:void()'>"+options.deleteLinkText+"</a></strong></div>")
-			// 		.css({
-			// 			outline:"0",
-			// 			border:"1px solid #CCC",
-			// 			"box-shadow":"1px 1px 3px",
-			// 			"background":"rgba(0,0,0,0.7)",
-			// 			"position":"absolute",
-			// 			"padding":"5px",
-			// 			"-webkit-border-bottom-left-radius": "10px",
-			// 			"-webkit-border-bottom-right-radius": "10px",
-			// 			"-moz-border-radius-bottomleft": "10px",
-			// 			"-moz-border-radius-bottomright": "10px",
-			// 			"border-bottom-left-radius": "10px",
-			// 			"border-bottom-right-radius": "10px",
-			// 			"-moz-box-shadow": "1px 1px 2px #000", 
-			// 			"-webkit-box-shadow": "1px 1px 2px #000",
-			// 			"box-shadow":"1px 1px 2px #000"
-			// 			})
-			// 		.appendTo("body")
-			// 		.find("a")
-			// 		.bind("click",function(e){
-			// 			deleteRow();
-			// 			return false;
-			// 		})
-			// 		.end()
-			// 		.bind("click",function(e){
-			// 			return false;
-			// 		})
-			// 		.hide()
-			// 		;
-			// 	}
-			// }
-
-		}
-
-		var selectionChange = function(){
-
-			var maxX,maxY,minX,minY;
-
-			jQuery(".selection").remove();
-
-			jQuery(".selected").each(function(){
-				var pos = jQuery(this).position();
-				var offsetX = jQuery(this).outerWidth();
-				var offsetY = jQuery(this).outerHeight();
-
-				if(typeof maxX === "undefined"){
-					maxX = pos.left + offsetX;
-				}else if((pos.left + offsetX) > maxX){
-					maxX = pos.left + offsetX;
-				}
-
-				if(typeof maxY === "undefined"){
-					maxY = pos.top + offsetY;
-				}else if((pos.top + offsetY) > maxY){
-					maxY = pos.top + offsetY;
-				}
-
-
-				if(typeof minY === "undefined"){
-					minY = pos.top;
-				}else if(pos.top < minY){
-					minY = pos.top;
-				}
-
-				if(typeof minX === "undefined"){
-					minX = pos.left;
-				}else if(pos.left < minX){
-					minx = pos.left;
-				}
-
-			});
-
-
-			var css = {outline:"0",border:"1px solid #3875D7","background-color":"#3875D7","opacity":0.3,"position":"absolute"};
-
-			jQuery("<div class='selection'>&nbsp;</div>").css(css).css(
-				{
-					width:maxX-minX+"px",
-					height:maxY-minY+"px",
-					top:minY,
-					left:minX
-				}).appendTo("body");
-
-
-		}
-
-		var renameInputs = function (row){
-				var rName = /^(data\[\w*\]\[)(\d+)(\]\[\w*\])$/;
-				var rId = /^(\D+)(\d+)(\D+)$/;
-				jQuery(":input[name^=data]",row).each(function(i,e){
-					var $this = jQuery(this);
-					var name = $this.attr("name");
-					var id = $this.attr("id");
-					var mName = name.match(rName);
-					var mId = id.match(rId);
-					var numero = 0;
-					if(mName && mId && mName[2] == mId[2]){
-						numero = parseInt(mName[2]);
-						if(isFinite(numero)){
-							numero++;
-							$this.attr("name",name.replace(rName,"$1"+numero+"$3"));
-							$this.attr("id",id.replace(rId,"$1"+numero+"$3"));
+		      	case 37:
+				case 39:
+				case 9:
+				if(e.keyCode==37){
+					if(text && text.selectionStart && text.selectionEnd){
+						if(text.selectionEnd!=text.selectionStart){
+							break;
+						}else if(text.selectionStart!=0){
+							//Do not Jump From Cell
+							break;
 						}
 					}
-				});
+				}else if(e.keyCode==39){
+					if(text && text.selectionStart && text.selectionEnd){
+						if(text.selectionEnd!=text.selectionStart){
+							break;
+						}else if(text.selectionEnd!=text.value.length){
+							//Do not Jump From Cell
+							break;
 
-
-		}
-
-		var addRow = function(e,noFocus){
-
-			if(options.allowAdd){
-				var tabla = jQuery(this).parents("table");
-				var nueva = jQuery("tr:has(:input[name^=data])",tabla).last().clone();
-				renameInputs(nueva);
-				nueva
-					.toggleClass("even")
-					.toggleClass("odd")
-					.find(":input[name^=data]")
-						.filter(":input[name$='[id]']") //Clean ID
-							.val("")
-						.end()
-					.end()
-					.insertAfter(tabla.find("tr:last"))
-					.find("td")
-						.removeAttr("style") //removing custom styles (usful when duplicating a highlighting cell);
-						.removeClass("dirty")
-				setEvents(nueva);
-
-				// //focus new row
-				if(!noFocus){
-					jQuery(this).parent().next().children("td").eq(jQuery(this).index()).trigger("focus.PeGrid");
-
-				}
-			}
-
-		}
-
-		var deleteRow = function(){
-			if(options.deleteUrlTemplate){
-				var row = jQuery(jQuery("#target").data('current')).parents("tr");
-				jQuery.post(options.deleteUrlTemplate.replace('{id}',jQuery(options.idQueryTemplate,row).val()),function(data,text){
-					row.trigger("localDelete.PeGrid");
-				});
-			}else{
-				row.trigger("localDelete.PeGrid");
-			}
-
-		}
-
-		var localDelete = function (){
-			var row = jQuery(jQuery("#target").data('current')).parents("tr");
-			//if there is more than one row, remove it
-			if(row.siblings("tr").length > 1){
-				row.remove();
-			}else{
-				//this is the last row...sanitize it....
-				row.find("td.editable").find(":input").val("").end().trigger("render.PeGrid");
-			}
-		}
-
-		var navigateCells = function(e){
-				var currentTd = jQuery(jQuery("#target").data('current'));
-				var tr;
-				var next;
-				next = currentTd.trigger("endEdit.PeGrid");
-				//if shift is down...
-				//Select
-				if(e.shiftKey){
-					currentTd.addClass("selected");
-					selecting=true;
-				}else{
-					selecting=false;
-				}
-
-
-				//if Ctrl down
-				//Handle copy or paste
-				// console.dir(e);
-				if(e.ctrlKey){
-					console.log("control");
-					console.log(e.keyCode);
-					if(e.keyCode==67){
-						console.log("copying...");
+						}
 					}
 				}
-
-				switch(e.keyCode)
-			  {
-			      // left arrow
-			      case 37:
-			          next = currentTd.prev(":visible").trigger("focus.PeGrid");
-			          break;
-				 //tab key
-				  case 9:
-				//nasty hack to avoid blur on tab....  
-				setTimeout(function(){
-					jQuery("#target").focus();
-					},1);
-			      // right arrow
-			      case 39:
-			          next = currentTd.next(":visible").trigger("focus.PeGrid");
-			          break;
-			      // up arrow
-			      case 38:
-					next = currentTd.parent().prev().children("td").eq(jQuery(currentTd).index()).trigger("focus.PeGrid");
-			      break;
-			      // down arrow
-			      case 40:
-					var tr = currentTd.parent().next();
-					if(tr.length){
-						next = tr.children("td").eq(currentTd.index()).trigger("focus.PeGrid");
-					}else{
-						currentTd.trigger("addRow.PeGrid");
+		        case 38:
+				case 40:
+					if($(this).attr("aria-haspopup") || $(this).is(".hasDatepicker") || $(this).is(".complex") || $(this).is("select")){
+						//Ok...it is a complex component....leave it alone...
+						// console.log("complex component");
+						break;
 					}
-					break;
-						//Esc Key
-				case 27:
-					if(jQuery("#target").is("editing")){
-						currentTd.trigger("endEdit.PeGrid");
-					}else{
-						currentTd.trigger("blurTable.PeGrid");
-					}
-
-					break;
-
-						//Esc Key
-				case 13:
-					e.preventDefault();
-					currentTd.trigger("beginEdit.PeGrid");
-				break;
-						//Backspace Key
-				case 8:
-					e.stopPropagation();
-					currentTd.trigger("beginEdit.PeGrid");
-
-				break;
-
+				self.commit();
+				self.navigateCells(e);
+				return false;
 				default:
-				// console.log(e.keyCode);
-				if((e.keyCode >= 48 && e.keyCode <= 90) || (e.keyCode == 32) || (e.keyCode >= 96 && e.keyCode <= 105) ){
-					currentTd.trigger("beginEdit.PeGrid");
-				}
-			  }
+			}
 
-				if(e.shiftKey){
-					next.addClass("selected");
-					currentTd.trigger("selectionChange.PeGrid");
-				}
-				
-			return false;
-		} 
-
-		var confirmExit=function(context){
-			// jQuery(window).bind()
-			var that = context;
-			window.onbeforeunload = function (e) {
-				var message = "Los cambios aun no fueron guardados";
-
-				// alert(jQuery(that).is(":has(.dirty)"));
-				// console.log(jQuery(that).is(":has(.dirty)"));
-				if(jQuery(that).is(":has(.dirty)")||jQuery("#target").is(".editing")){
-					e = e || window.event;
-				  // For IE and Firefox
-				  if (e) {
-				    e.returnValue = message;
-				  }
-
-				  // For Safari
-				  return message;
-				}else{
-					return;
-				}
-
-			};
-		};
-
-
-		styleTable(this);
-
-		hideInputs(this);
-
-		//fix Striping (if any);
-		reStripe(this);
-
-		//Link Events
-		setEvents(this);
-
-		//setUp Cursor
-		startCursor();
-
-		//Contextual Tools
-		startContextTools();
-
-		confirmExit(this);
-
-		// jQuery(document).click(function(){
-		// 	jQuery("td")
-		// });
-
-		return this;
-	}
+		}
+	});
+})(jQuery);

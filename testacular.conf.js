@@ -3,13 +3,19 @@
 
 
 // base path, that will be used to resolve files and exclude
-basePath = '../../../../..';
+basePath = '.';
 
 
 // list of files / patterns to load in the browser
 files = [
   JASMINE,
-  JASMINE_ADAPTER
+  JASMINE_ADAPTER,
+  'lib/jasmine-jquery.js',
+  'lib/jquery.js',
+  'lib/jquery.ui.js',
+  'src/jquery.hipp.grid.js',
+  'test/*.js',
+  //'spec/javascripts/fixtures/*.html'
 ];
 
 
@@ -19,9 +25,13 @@ exclude = [
 ];
 
 
+proxies = {
+'/fixtures' : 'http://localhost:7777/'
+};
+
 // test results reporter to use
 // possible values: 'dots', 'progress', 'junit'
-reporters = ['progress'];
+reporters = ['dots'];
 
 
 // web server port

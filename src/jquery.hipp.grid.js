@@ -14,13 +14,13 @@
 		options : {
 			selection:false, //this is buggy...for now...
 			allowAdd:true,
+			autoAdd:true,
 			allowDelete:true,
 			autoSubmit:true,
 			contextMenu:true,
 			text:{
 				lastRow:"Ultima fila. Presione la tecla ⇣ para agregar una nueva fila",
 				deleteRow:"Elminar Fila"
-
 			},
 			//Function callbacks for these?
 			queryUpdateTemplate:":input[name='data[{model}][{iterator}][{field}]']",
@@ -52,6 +52,8 @@
 			this._wireEvents(this.table);
 
 			this._newCursor();
+
+			this._ensureNewRow();
 		},
 
 		_newCursor : function(){
@@ -121,7 +123,6 @@
 
 		//Saves current value to internal input
 		commit : function(){
-			// INSERT COMMIT CODE HERE
 			var history = this.current.data("history")||[];
 			var oldValue ;
 			var newValue ;
@@ -161,6 +162,7 @@
 
 				this.current.removeClass("error");
 				this.stopEdit();
+				this._ensureNewRow();
 			}
 		},
 
@@ -196,7 +198,7 @@
 				self._trigger("cellblur",0,self.last);	
 			}
 
-			//this cell is current...
+			//cell param is current cell...
 			self.current = $(cell);
 
 			self.moveCursorTo(self.current);
@@ -255,6 +257,7 @@
 					var tr = self.current.parent().next();
 					if(tr.length==0){
 						self.addRow();
+						self.focusCell(self._cellBelow(self.current));
 					}
 					self.focusCell(self._cellBelow(self.current));
 
@@ -307,6 +310,8 @@
 				//If there is a checkbox, just switch state
 				var $checkbox = this.current.find(':checkbox');
 				$checkbox.attr('checked', !$checkbox.attr('checked'));
+				//trigger a commit
+				this.commit();
 				return false;
 			}
 
@@ -347,7 +352,8 @@
 		//Add new row
 
 		addRow : function (){
-			if(self.options.allowAdd){				
+			//if add is allowed and last row is NOT empty
+			if(self.options.allowAdd && !self._isEmptyRow(self.table.find("tr:last"))){				
 				var newRow = $("tr:has(:input[name^=data])",self.table).last().clone();
 				self.renameInputs(newRow);
 				newRow
@@ -382,6 +388,7 @@
 				nextCell = this._cellAbove(this.current);
 			}
 			row.remove();
+			//current cell is no longer valid...
 			this.focusCell(nextCell);
 			
 		},
@@ -413,7 +420,7 @@
 				var rName = /^(data\[\w*\]\[)(\d+)(\]\[\w*\])$/;
 				var rId = /^(\D+)(\d+)(\D+)$/;
 				$(input).attr("name",$(input).attr("name").replace(rName,"$1"+number+"$3"));
-				$(input).attr("id",$(input100).attr("name").replace(rId,"$1"+number+"$3"));
+				$(input).attr("id",$(input).attr("name").replace(rId,"$1"+number+"$3"));
 			}		
 		},
 
@@ -464,26 +471,73 @@
 			inputs.each(function(){
 				//do I hava a rendering.span?
 				if($(this).next().is("span.render")){
-					//Ok...so I will render...
+					//get the span
 					var render = $(this).next();
+					render.removeClass("placeholder");
+					//get the input
 					var input = $(this);
+					//if it is a value get the literal
 					if(input.is("select")){
 						value = input.find("option:selected").text();
 					}else{
 						value = input.val();
 					}
+					//if value has changed...
 					if(render.text()!=value){
 						render.text(value);
 						updated = true;
 					}
-					
+
+					if(render.text().length == 0){
+						render.addClass("placeholder");
+						var field = input.attr("name").replace(/^data\[\w*\]\[\d+\]\[(\w*)\]$/,"$1");
+						field = field.replace(/_/g," ");
+						//use the placeholder or falback to field name...
+						render.text(input.attr("placeholder")||field);
+					}
 				}
 			});
+
 			if(updated){
 				if($.isFunction($.fn.effect)){
 					$(this).filter(":not(:animated)").effect("highlight","slow");
 				}
 			}
+
+		},
+
+		_isEmptyRow : function(row){
+			var values = row.find(":input").filter(":not(select,:checkbox)").map(function(){return $(this).val()}).get();
+			return values.join("").length == 0;
+
+		} ,
+
+		_ensureNewRow : function(e){
+			//exit if add is not allowed
+			if(!self.options.allowAdd){
+				return false;
+			}
+
+			var lastRow = this.table.find("tbody tr").last();
+
+			//check if last row is empty...
+			if(this._isEmptyRow(lastRow)){
+				console.log("there is an empty row");
+			}else{
+				console.log("adding new row...");
+				self.addRow().addClass("newRow");
+			}
+			//check if there are any other empty rows...
+			//and remove them..
+			this.table.find("tbody tr").not(":last").each(function(i,e){
+				$this = $(this);
+				if(self._isEmptyRow($this)){
+					self.deleteRow($this);
+				}
+			});
+			//in case we made a mess...
+
+			this.renumberInputs();
 
 		},
 

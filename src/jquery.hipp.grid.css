@@ -15,7 +15,12 @@
 	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#eeeeee',GradientType=0 ); /* IE6-9 */
 	}
 .hipp-grid tbody tr td { padding: 10px; background: #fff; border-top: 1px solid #eee; border-left: 1px solid #eee; }
-.hipp-grid tbody tr.even td { background: #fcfcfc; }
+.hipp-grid tbody tr:even td { background: #fcfcfc; }
+
+.hipp-grid .placeholder{
+	font-style: italic;
+	color:#ccc;
+}
 
 .cursor input, select, textarea, button { outline: none; font-family: DroidSansRegular, "Lucida Sans Unicode", "Lucida Grande", sans-serif; font-size: 12px; }
 .cursor input, select, textarea, button { border: 1px solid #AAAAAA; padding: 5px; }
